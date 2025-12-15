@@ -28,13 +28,18 @@ import {
   getMFCConsentApprove,
   getETFUserLinkedAccounts,
   getETFInsights,
+  getETFAccountStatement,
   getEquitiesUserLinkedAccounts,
   getEquitiesHoldingBroker,
   getEquitiesDematHolding,
   getEquitiesBrokerHolding,
   getEquitiesUserDetails,
+  getEquitiesAccountStatement,
   getEquitiesETFsDematHolding,
+  getEquitiesETFsAccountStatement,
   getDepositUserDetails,
+  getDepositUserLinkedAccounts,
+  getDepositAccountStatement,
   getDepositAccountStatementDownload,
   getDepositInsights,
   delinkAccount,
@@ -64,7 +69,7 @@ export default function DashboardPage() {
     mfdetails: 'linked',
     etf: 'linked',
     equities: 'linked',
-    deposit: 'details',
+    deposit: 'linked',
     firequest: '',
     fips: '',
     brokers: '',
@@ -167,6 +172,9 @@ export default function DashboardPage() {
           case 'insights':
             loadData('etf-insights', getETFInsights);
             break;
+          case 'statement':
+            loadData('etf-statement', getETFAccountStatement);
+            break;
         }
         break;
       case 'equities':
@@ -189,15 +197,27 @@ export default function DashboardPage() {
           case 'combined':
             loadData('eq-etf-combined', getEquitiesETFsDematHolding);
             break;
+          case 'statement':
+            loadData('eq-statement', getEquitiesAccountStatement);
+            break;
+          case 'etf-statement':
+            loadData('eq-etf-statement', getEquitiesETFsAccountStatement);
+            break;
         }
         break;
       case 'deposit':
         switch (activeSubTab.deposit) {
+          case 'linked':
+            loadData('dep-linked', getDepositUserLinkedAccounts);
+            break;
           case 'details':
             loadData('dep-details', getDepositUserDetails);
             break;
           case 'statement':
-            loadData('dep-statement', getDepositAccountStatementDownload);
+            loadData('dep-statement', getDepositAccountStatement);
+            break;
+          case 'download':
+            loadData('dep-download', getDepositAccountStatementDownload);
             break;
           case 'insights':
             loadData('dep-insights', getDepositInsights);
@@ -291,8 +311,10 @@ export default function DashboardPage() {
 
   const subTabs = {
     deposit: [
+      { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
       { id: 'details', label: 'User Details', icon: '👤' },
       { id: 'statement', label: 'Statement', icon: '📄' },
+      { id: 'download', label: 'Download', icon: '⬇️' },
       { id: 'insights', label: 'Insights', icon: '💡' },
     ],
     termdeposit: [
@@ -318,6 +340,7 @@ export default function DashboardPage() {
     etf: [
       { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
       { id: 'insights', label: 'Insights', icon: '💡' },
+      { id: 'statement', label: 'Statement', icon: '📄' },
     ],
     equities: [
       { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
@@ -326,6 +349,8 @@ export default function DashboardPage() {
       { id: 'broker', label: 'Broker Holding', icon: '💼' },
       { id: 'details', label: 'User Details', icon: '👤' },
       { id: 'combined', label: 'Equities + ETF', icon: '🔀' },
+      { id: 'statement', label: 'Statement', icon: '📄' },
+      { id: 'etf-statement', label: 'Equities+ETF Statement', icon: '📋' },
     ],
   };
 

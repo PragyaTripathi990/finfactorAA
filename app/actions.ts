@@ -517,14 +517,20 @@ export async function getMFCConsentRequest(): Promise<any> {
 }
 
 /**
- * Mutual Fund - MFC Consent Approve
+ * Mutual Fund - MFC Consent Approve (requires clientReferenceId and OTP)
  */
-export async function getMFCConsentApprove(): Promise<any> {
+export async function getMFCConsentApprove(
+  clientReferenceId: string,
+  enteredOtp: string,
+  uniqueIdentifier: string = '8956545791'
+): Promise<any> {
   try {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/mutual-fund/mfc/consent-approve',
       {
-        uniqueIdentifier: '8956545791',
+        uniqueIdentifier,
+        clientReferenceId,
+        enteredOtp,
       }
     );
     return response.data || response;
@@ -758,6 +764,104 @@ export async function getDepositInsights(): Promise<any> {
     return response.data || response;
   } catch (error) {
     console.error('Error fetching deposit insights:', error);
+    return null;
+  }
+}
+
+/**
+ * ETF - Get user account statement
+ */
+export async function getETFAccountStatement(): Promise<any> {
+  try {
+    const response = await makeAuthenticatedRequest<any>(
+      '/pfm/api/v2/etf/user-account-statement',
+      {
+        uniqueIdentifier: '8956545791',
+        accountId: '60e38f9b-50da-46b2-bb43-3ddb5b9e63c1',
+        dateRangeFrom: '2024-01-01',
+      }
+    );
+    return response.data || response;
+  } catch (error) {
+    console.error('Error fetching ETF account statement:', error);
+    return null;
+  }
+}
+
+/**
+ * Equities - Get user account statement
+ */
+export async function getEquitiesAccountStatement(): Promise<any> {
+  try {
+    const response = await makeAuthenticatedRequest<any>(
+      '/pfm/api/v2/equities/user-account-statement',
+      {
+        uniqueIdentifier: '9823972748',
+        accountId: '60e38f9b-50da-46b2-bb43-3ddb5b9e63c1',
+        dateRangeFrom: '2024-01-01',
+      }
+    );
+    return response.data || response;
+  } catch (error) {
+    console.error('Error fetching equities account statement:', error);
+    return null;
+  }
+}
+
+/**
+ * Equities and ETFs - Get user account statement
+ */
+export async function getEquitiesETFsAccountStatement(): Promise<any> {
+  try {
+    const response = await makeAuthenticatedRequest<any>(
+      '/pfm/api/v2/equities-and-etfs/user-account-statement',
+      {
+        uniqueIdentifier: '9823972748',
+        accountId: '60e38f9b-50da-46b2-bb43-3ddb5b9e63c1',
+        dateRangeFrom: '2024-01-01',
+      }
+    );
+    return response.data || response;
+  } catch (error) {
+    console.error('Error fetching equities and ETFs account statement:', error);
+    return null;
+  }
+}
+
+/**
+ * Deposit - Get user account statement
+ */
+export async function getDepositAccountStatement(): Promise<any> {
+  try {
+    const response = await makeAuthenticatedRequest<any>(
+      '/pfm/api/v2/deposit/user-account-statement',
+      {
+        uniqueIdentifier: '8956545791',
+        accountId: '60e38f9b-50da-46b2-bb43-3ddb5b9e63c1',
+        dateRangeFrom: '2024-01-01',
+      }
+    );
+    return response.data || response;
+  } catch (error) {
+    console.error('Error fetching deposit account statement:', error);
+    return null;
+  }
+}
+
+/**
+ * Deposit - Get user linked accounts
+ */
+export async function getDepositUserLinkedAccounts(): Promise<any> {
+  try {
+    const response = await makeAuthenticatedRequest<any>(
+      '/pfm/api/v2/deposit/user-linked-accounts',
+      {
+        uniqueIdentifier: '8956545791',
+      }
+    );
+    return response.data || response;
+  } catch (error) {
+    console.error('Error fetching deposit user linked accounts:', error);
     return null;
   }
 }
