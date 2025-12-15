@@ -169,7 +169,10 @@ export async function getFIRequestAccount(): Promise<any> {
   try {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/firequest-account',
-      {}
+      {
+        uniqueIdentifier: '8956545791',
+        accountId: 'b986d95d-709e-45a7-8548-39814173ec9c',
+      }
     );
     return response.data || response;
   } catch (error) {
@@ -231,16 +234,13 @@ export async function getNPSLinkedAccounts(): Promise<any> {
 /**
  * Get account consents latest
  */
-export async function getAccountConsents(
-  uniqueIdentifier: string = '9823972748',
-  accountId: string = '9fb86acf-fa60-4ae1-93a9-2a2ae4cf44d5'
-): Promise<any> {
+export async function getAccountConsents(): Promise<any> {
   try {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/account-consents-latest',
       {
-        uniqueIdentifier,
-        accountId,
+        uniqueIdentifier: '8956545791',
+        accountId: 'b986d95d-709e-45a7-8548-39814173ec9c',
       }
     );
     return response.data || response;
