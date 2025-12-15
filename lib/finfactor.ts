@@ -106,8 +106,24 @@ export async function makeAuthenticatedRequest<T>(
       throw new Error(`API request failed: ${response.status} ${response.statusText}. ${errorText}`);
     }
 
-    const data = await response.json();
-    return data as T;
+    // Get the response as text first
+    const responseText = await response.text();
+    
+    // Try to parse as JSON, if it fails, handle plain text response
+    try {
+      const data = JSON.parse(responseText);
+      return data as T;
+    } catch (jsonError) {
+      // If response is plain text (like "SUCCESS"), wrap it in an object
+      if (responseText) {
+        return { 
+          success: true, 
+          message: responseText,
+          data: responseText 
+        } as T;
+      }
+      throw new Error('API returned empty response');
+    }
   } catch (error) {
     if (error instanceof Error) {
       throw error;
