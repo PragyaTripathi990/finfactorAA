@@ -9,14 +9,20 @@
     "lint": "next lint",
     "seed:supabase": "npx tsx scripts/seed-supabase.ts",
     "seed:from-apis": "npx tsx scripts/seed-from-apis.ts",
+    "seed:layered": "npx tsx scripts/seed-layered.ts",
+    "seed:production": "npx tsx scripts/seed-production.ts",
+    "seed:simple": "npx tsx scripts/seed-simple.ts",
     "check:data-quality": "npx tsx scripts/check-data-quality.ts",
     "check:api-fields": "npx tsx scripts/check-api-fields.ts",
     "analyze:schema-gaps": "npx tsx scripts/analyze-schema-gaps.ts",
-    "test:all-apis": "npx tsx scripts/test-all-apis.ts"
+    "test:all-apis": "npx tsx scripts/test-all-apis.ts",
+    "diagnose:api-structure": "npx tsx scripts/diagnose-api-structure.ts",
+    "check:seed-status": "npx tsx scripts/check-seed-status.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.87.3",
+    "dotenv": "^17.2.3",
     "framer-motion": "^11.18.2",
     "next": "^16.0.10",
     "react": "^19.0.0",

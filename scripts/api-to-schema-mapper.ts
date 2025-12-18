@@ -329,23 +329,98 @@ export function mapTransactions(
  * Map Deposit Summary from linked account data
  */
 export function mapDepositSummary(linkedAccount: any): MappedDepositSummary {
-  const summary = linkedAccount.Summary || linkedAccount.summary || {};
-  const profile = linkedAccount.Profile || linkedAccount.profile || {};
+  // Try multiple possible field name variations
+  const summary = linkedAccount.Summary 
+    || linkedAccount.summary 
+    || linkedAccount.SummaryData
+    || linkedAccount.summaryData
+    || {};
+    
+  const profile = linkedAccount.Profile 
+    || linkedAccount.profile 
+    || linkedAccount.ProfileData
+    || linkedAccount.profileData
+    || {};
+  
+  // Helper to get value from multiple possible paths
+  const getValue = (paths: string[], defaultValue: any = null) => {
+    for (const path of paths) {
+      const value = getNestedValue(linkedAccount, path) || getNestedValue(summary, path) || getNestedValue(profile, path);
+      if (value !== null && value !== undefined && value !== '') {
+        return value;
+      }
+    }
+    return defaultValue;
+  };
   
   return {
-    current_balance: parseNumber(summary.currentBalance || linkedAccount.currentBalance),
-    currency: summary.currency || 'INR',
-    balance_datetime: parseDate(summary.balanceDateTime),
-    account_type: profile.accType || linkedAccount.accType || null,
-    account_sub_type: profile.accSubType || null,
-    branch: profile.branch || null,
-    ifsc: profile.ifsc || profile.ifscCode || null,
-    micr_code: profile.micrCode || null,
-    opening_date: parseDate(profile.openingDate),
-    status: profile.status || linkedAccount.linkStatus || null,
-    pending_balance: parseNumber(summary.pendingBalance),
-    available_credit_limit: parseNumber(summary.availableCreditLimit),
-    drawing_limit: parseNumber(summary.drawingLimit),
+    current_balance: parseNumber(
+      getValue([
+        'currentBalance',
+        'current_balance',
+        'balance',
+        'currentBalanceAmount'
+      ])
+    ),
+    currency: getValue(['currency'], 'INR'),
+    balance_datetime: parseDate(
+      getValue([
+        'balanceDateTime',
+        'balance_date_time',
+        'balanceDate',
+        'lastUpdated'
+      ])
+    ),
+    account_type: getValue([
+      'accType',
+      'accountType',
+      'account_type',
+      'type'
+    ]),
+    account_sub_type: getValue([
+      'accSubType',
+      'accountSubType',
+      'account_sub_type',
+      'subType'
+    ]),
+    branch: getValue(['branch', 'branchName', 'branch_name']),
+    ifsc: getValue(['ifsc', 'ifscCode', 'ifsc_code', 'IFSC']),
+    micr_code: getValue(['micrCode', 'micr_code', 'MICR']),
+    opening_date: parseDate(
+      getValue([
+        'openingDate',
+        'opening_date',
+        'accountOpeningDate',
+        'createdDate'
+      ])
+    ),
+    status: getValue([
+      'status',
+      'accountStatus',
+      'linkStatus',
+      'link_status'
+    ]),
+    pending_balance: parseNumber(
+      getValue([
+        'pendingBalance',
+        'pending_balance',
+        'unclearedBalance'
+      ])
+    ),
+    available_credit_limit: parseNumber(
+      getValue([
+        'availableCreditLimit',
+        'available_credit_limit',
+        'creditLimit'
+      ])
+    ),
+    drawing_limit: parseNumber(
+      getValue([
+        'drawingLimit',
+        'drawing_limit',
+        'withdrawalLimit'
+      ])
+    ),
   };
 }
 

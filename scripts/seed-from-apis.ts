@@ -1,3 +1,7 @@
+import * as dotenv from 'dotenv';
+// Load environment variables from .env.local
+dotenv.config({ path: '.env' });
+
 /**
  * Seed Supabase Database from Real API Responses
  * 
@@ -10,6 +14,7 @@
  * Run with: npm run seed:from-apis
  */
 
+
 import { createClient } from '@supabase/supabase-js';
 import { makeAuthenticatedRequest } from '../lib/finfactor';
 import {
@@ -21,6 +26,8 @@ import {
   mapDepositSummary,
   mapInsights,
   extractFieldsWithTypes,
+  parseNumber,
+  parseDate,
 } from './api-to-schema-mapper';
 
 // Supabase configuration
@@ -376,19 +383,196 @@ async function seedLinkedAccounts(
         });
       
       if (!error) insertedHolders++;
+      else console.error(`❌ Error inserting holder:`, error.message);
     }
+  }
+  
+  // Populate summary tables based on FI type
+  let insertedSummaries = 0;
+  if (fiType === 'DEPOSIT') {
+    insertedSummaries = await seedDepositSummaries(response, accountMap, fetchRunId);
+  } else if (fiType === 'TERM_DEPOSIT') {
+    insertedSummaries = await seedTermDepositSummaries(response, accountMap, fetchRunId);
+  } else if (fiType === 'RECURRING_DEPOSIT') {
+    insertedSummaries = await seedRecurringDepositSummaries(response, accountMap, fetchRunId);
+  } else if (fiType === 'MUTUAL_FUND') {
+    insertedSummaries = await seedMutualFundSummaries(response, accountMap, fetchRunId);
+  } else if (fiType === 'EQUITIES') {
+    insertedSummaries = await seedEquitySummaries(response, accountMap, fetchRunId);
   }
   
   apiResults.push({
     endpoint: apiPath,
     status: 'SUCCESS',
     recordsInserted: insertedAccounts,
-    message: `${insertedAccounts} accounts, ${insertedHolders} holders`,
+    message: `${insertedAccounts} accounts, ${insertedHolders} holders, ${insertedSummaries} summaries`,
   });
   
-  console.log(`✅ Seeded ${insertedAccounts} ${fiType} accounts, ${insertedHolders} holders`);
+  console.log(`✅ Seeded ${insertedAccounts} ${fiType} accounts, ${insertedHolders} holders, ${insertedSummaries} summaries`);
   return accountMap;
 }
+
+// =====================================================
+// SUMMARY TABLE POPULATION FUNCTIONS
+// =====================================================
+
+async function seedDepositSummaries(
+  apiResponse: any,
+  accountMap: Map<string, string>,
+  fetchRunId: string | null
+): Promise<number> {
+  let inserted = 0;
+  const fipData = apiResponse?.fipData || [];
+  
+  for (const fip of fipData) {
+    const linkedAccounts = fip.linkedAccounts || [];
+    
+    for (const acc of linkedAccounts) {
+      const accountRefNumber = acc.accountRefNumber || acc.linkRefNumber || acc.maskedAccNumber;
+      const dbAccountId = accountMap.get(accountRefNumber || '');
+      
+      if (!dbAccountId) continue;
+      
+      const summary = mapDepositSummary(acc);
+      
+      const { error } = await supabase
+        .from('fi_deposit_summaries')
+        .upsert({
+          account_id: dbAccountId,
+          fetch_run_id: fetchRunId,
+          current_balance: summary.current_balance,
+          currency: summary.currency,
+          balance_datetime: summary.balance_datetime,
+          account_type: summary.account_type,
+          account_sub_type: summary.account_sub_type,
+          branch: summary.branch,
+          ifsc: summary.ifsc,
+          micr_code: summary.micr_code,
+          opening_date: summary.opening_date,
+          status: summary.status,
+          pending_balance: summary.pending_balance,
+          available_credit_limit: summary.available_credit_limit,
+          drawing_limit: summary.drawing_limit,
+        }, { onConflict: 'account_id' });
+      
+      if (!error) inserted++;
+      else console.error(`❌ Error inserting deposit summary:`, error.message);
+    }
+  }
+  
+  return inserted;
+}
+
+async function seedTermDepositSummaries(
+  apiResponse: any,
+  accountMap: Map<string, string>,
+  fetchRunId: string | null
+): Promise<number> {
+  let inserted = 0;
+  const fipData = apiResponse?.fipData || [];
+  
+  for (const fip of fipData) {
+    const linkedAccounts = fip.linkedAccounts || [];
+    
+    for (const acc of linkedAccounts) {
+      const accountRefNumber = acc.accountRefNumber || acc.linkRefNumber;
+      const dbAccountId = accountMap.get(accountRefNumber || '');
+      
+      if (!dbAccountId) continue;
+      
+      const summary = acc.Summary || acc.summary || {};
+      const profile = acc.Profile || acc.profile || {};
+      
+      const { error } = await supabase
+        .from('fi_term_deposit_summaries')
+        .upsert({
+          account_id: dbAccountId,
+          fetch_run_id: fetchRunId,
+          principal_amount: parseNumber(summary.principalAmount || summary.principal_amount),
+          current_balance: parseNumber(summary.currentBalance || summary.current_balance),
+          maturity_amount: parseNumber(summary.maturityAmount || summary.maturity_amount),
+          maturity_date: parseDate(summary.maturityDate || summary.maturity_date),
+          interest_rate: parseNumber(summary.interestRate || summary.interest_rate),
+          interest_payout: summary.interestPayout || summary.interest_payout || null,
+          opening_date: parseDate(summary.openingDate || profile.openingDate),
+          tenure_days: summary.tenureDays || summary.tenure_days || null,
+          tenure_months: summary.tenureMonths || summary.tenure_months || null,
+          current_value: parseNumber(summary.currentValue || summary.current_value),
+          compounding_frequency: summary.compoundingFrequency || summary.compounding_frequency || null,
+        }, { onConflict: 'account_id' });
+      
+      if (!error) inserted++;
+      else console.error(`❌ Error inserting term deposit summary:`, error.message);
+    }
+  }
+  
+  return inserted;
+}
+
+async function seedRecurringDepositSummaries(
+  apiResponse: any,
+  accountMap: Map<string, string>,
+  fetchRunId: string | null
+): Promise<number> {
+  let inserted = 0;
+  const fipData = apiResponse?.fipData || [];
+  
+  for (const fip of fipData) {
+    const linkedAccounts = fip.linkedAccounts || [];
+    
+    for (const acc of linkedAccounts) {
+      const accountRefNumber = acc.accountRefNumber || acc.linkRefNumber;
+      const dbAccountId = accountMap.get(accountRefNumber || '');
+      
+      if (!dbAccountId) continue;
+      
+      const summary = acc.Summary || acc.summary || {};
+      
+      const { error } = await supabase
+        .from('fi_recurring_deposit_summaries')
+        .upsert({
+          account_id: dbAccountId,
+          fetch_run_id: fetchRunId,
+          current_balance: parseNumber(summary.currentBalance || summary.current_balance),
+          maturity_amount: parseNumber(summary.maturityAmount || summary.maturity_amount),
+          maturity_date: parseDate(summary.maturityDate || summary.maturity_date),
+          interest_rate: parseNumber(summary.interestRate || summary.interest_rate),
+          recurring_amount: parseNumber(summary.recurringAmount || summary.recurring_amount),
+          tenure_months: summary.tenureMonths || summary.tenure_months || null,
+          recurring_day: summary.recurringDay || summary.recurring_day || null,
+          principal_amount: parseNumber(summary.principalAmount || summary.principal_amount),
+          opening_date: parseDate(summary.openingDate),
+          current_value: parseNumber(summary.currentValue || summary.current_value),
+        }, { onConflict: 'account_id' });
+      
+      if (!error) inserted++;
+      else console.error(`❌ Error inserting RD summary:`, error.message);
+    }
+  }
+  
+  return inserted;
+}
+
+async function seedMutualFundSummaries(
+  apiResponse: any,
+  accountMap: Map<string, string>,
+  fetchRunId: string | null
+): Promise<number> {
+  // MF summaries are usually calculated from holdings, so we'll skip for now
+  // or calculate from holdings data
+  return 0;
+}
+
+async function seedEquitySummaries(
+  apiResponse: any,
+  accountMap: Map<string, string>,
+  fetchRunId: string | null
+): Promise<number> {
+  // Equity summaries are usually calculated from holdings, so we'll skip for now
+  return 0;
+}
+
+// Note: parseNumber and parseDate are imported from api-to-schema-mapper
 
 async function seedDepositTransactions(
   userId: string,
@@ -409,10 +593,11 @@ async function seedDepositTransactions(
     return;
   }
   
-  // Find Finvu Bank account
+  // Find Finvu Bank account (look for UUID-like accountRefNumber)
   let targetAccountId = accountIds[0];
   for (const accId of accountIds) {
-    if (accId.includes('finvu') || accId.length > 30) {
+    // Account ref numbers from API are UUIDs (36 chars)
+    if (accId.length > 30) {
       targetAccountId = accId;
       break;
     }
@@ -438,7 +623,20 @@ async function seedDepositTransactions(
       extractFieldsWithTypes(response.transactions[0]));
   }
   
+  // Get database account ID (accountMap key is accountRefNumber, value is DB UUID)
   const dbAccountId = accountMap.get(targetAccountId);
+  
+  if (!dbAccountId) {
+    console.error(`❌ Could not find DB account ID for ${targetAccountId}`);
+    apiResults.push({
+      endpoint: '/pfm/api/v2/deposit/user-account-statement',
+      status: 'ERROR',
+      recordsInserted: 0,
+      message: `Account ID ${targetAccountId} not found in database`,
+    });
+    return;
+  }
+  
   const fetchRunId = await createFetchRun(userId, tspId, 'TRANSACTIONS', '/pfm/api/v2/deposit/user-account-statement');
   
   const transactions = mapTransactions(response, targetAccountId);
@@ -465,6 +663,7 @@ async function seedDepositTransactions(
       }, { onConflict: 'account_id,dedupe_hash' });
     
     if (!error) inserted++;
+    else if (inserted === 0) console.error(`❌ Error inserting transaction:`, error.message);
   }
   
   apiResults.push({
@@ -504,8 +703,21 @@ async function seedMutualFundHoldings(
   const holdings = mapMutualFundHoldings(response);
   const fetchRunId = await createFetchRun(userId, tspId, 'MF_HOLDINGS', '/pfm/api/v2/mutual-fund/holding-folio');
   
-  // Get first MF account
-  const mfAccountId = Array.from(accountMap.values())[0] || null;
+  // Get first MF account (accountMap values are DB UUIDs)
+  const mfAccountIds = Array.from(accountMap.values());
+  const mfAccountId = mfAccountIds.length > 0 ? mfAccountIds[0] : null;
+  
+  if (!mfAccountId) {
+    console.error('❌ No MF account found in database');
+    apiResults.push({
+      endpoint: '/pfm/api/v2/mutual-fund/holding-folio',
+      status: 'ERROR',
+      recordsInserted: 0,
+      message: 'No MF account found',
+    });
+    return;
+  }
+  
   let inserted = 0;
   
   for (const holding of holdings) {
@@ -533,6 +745,7 @@ async function seedMutualFundHoldings(
       });
     
     if (!error) inserted++;
+    else if (inserted === 0) console.error(`❌ Error inserting MF holding:`, error.message);
   }
   
   apiResults.push({
@@ -572,7 +785,20 @@ async function seedEquityHoldings(
   const holdings = mapEquityHoldings(response);
   const fetchRunId = await createFetchRun(userId, tspId, 'EQUITY_HOLDINGS', '/pfm/api/v2/equities/demat-holding');
   
-  const equityAccountId = Array.from(accountMap.values())[0] || null;
+  const equityAccountIds = Array.from(accountMap.values());
+  const equityAccountId = equityAccountIds.length > 0 ? equityAccountIds[0] : null;
+  
+  if (!equityAccountId) {
+    console.error('❌ No equity account found in database');
+    apiResults.push({
+      endpoint: '/pfm/api/v2/equities/demat-holding',
+      status: 'ERROR',
+      recordsInserted: 0,
+      message: 'No equity account found',
+    });
+    return;
+  }
+  
   let inserted = 0;
   
   for (const holding of holdings) {
@@ -596,6 +822,7 @@ async function seedEquityHoldings(
       });
     
     if (!error) inserted++;
+    else if (inserted === 0) console.error(`❌ Error inserting equity holding:`, error.message);
   }
   
   apiResults.push({

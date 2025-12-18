@@ -1,0 +1,65 @@
+{
+  "subscriptionStatus": "YES",
+  "subscriptionStartDate": "2025-11-25T00:00:00.000+00:00",
+  "subscriptionEndDate": "2026-11-25T00:00:00.000+00:00",
+  "fiDatas": {
+    "DEPOSIT": {
+      "totalFiData": 17,
+      "totalFiDataToBeFetched": 0,
+      "lastFetchDate": "2025-12-18T15:45:49.922+00:00",
+      "currentBalance": 1220030
+    },
+    "TERM_DEPOSIT": {
+      "totalFiData": 1,
+      "totalFiDataToBeFetched": 0,
+      "lastFetchDate": "2025-12-18T15:45:49.922+00:00",
+      "currentValue": 69300
+    },
+    "RECURRING_DEPOSIT": {
+      "totalFiData": 1,
+      "totalFiDataToBeFetched": 0,
+      "lastFetchDate": "2025-12-18T15:45:49.922+00:00",
+      "currentValue": 64027.42
+    },
+    "EQUITIES": {
+      "totalFiData": 2,
+      "totalFiDataToBeFetched": 0,
+      "lastFetchDate": "2025-12-18T15:45:49.922+00:00",
+      "currentValue": 526210.2,
+      "totalHoldings": 12,
+      "totalBrokers": 1
+    },
+    "MUTUAL_FUNDS": {
+      "totalFiData": 3,
+      "totalFiDataToBeFetched": 0,
+      "lastFetchDate": "2025-12-18T15:45:49.922+00:00",
+      "dataSourceDetails": [
+        {
+          "dataResourceType": "AA",
+          "lastFetchDate": "2025-12-18T15:45:49.922+00:00"
+        },
+        {
+          "dataResourceType": "MFC",
+          "lastFetchDate": "2025-12-12"
+        }
+      ],
+      "currentValue": 1821719.21,
+      "costValue": 1116560.01,
+      "totalHoldings": 11
+    },
+    "GENERAL_INSURANCE": {
+      "totalFiData": 0,
+      "totalFiDataToBeFetched": 0
+    },
+    "LIFE_INSURANCE": {
+      "totalFiData": 0,
+      "totalFiDataToBeFetched": 0
+    },
+    "NPS": {
+      "totalFiData": 1,
+      "totalFiDataToBeFetched": 0,
+      "lastFetchDate": "2025-07-14T00:00:00.000+00:00",
+      "currentValue": 461
+    }
+  }
+}
