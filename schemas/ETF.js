@@ -2,80 +2,66 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 /**
- * ETF Holding Insight Schema (embedded)
- */
-const ETFHoldingInsightSchema = new Schema({
-  schemeName: { type: String },
-  isin: { type: String },
-  currentValue: { type: Number },
-  totalUnits: { type: Number },
-  currentNAV: { type: Number },
-  currentNAVDate: { type: Date },
-  returnsSummary: {
-    dailyReturns: { type: Number },
-    dailyReturnsPercentage: { type: Number }
-  }
-}, { _id: false });
-
-/**
- * ETF Demat Distribution Schema (embedded)
- */
-const DematDistributionSchema = new Schema({
-  dematId: { type: String },
-  brokerName: { type: String },
-  brokerCode: { type: String },
-  totalHoldings: { type: Number },
-  currentValue: { type: Number },
-  dematValuePercentage: { type: Number },
-  returnsSummary: {
-    dailyReturns: { type: Number },
-    dailyReturnsPercentage: { type: Number }
-  },
-  holdingsInsights: [ETFHoldingInsightSchema]
-}, { _id: false });
-
-/**
- * ETF Account Schema
+ * ETF Holding Schema
  * Stores data from /pfm/api/v2/etf/user-linked-accounts
+ * Similar structure to equities but for ETFs
  */
-const ETFAccountSchema = new Schema({
+const ETFHoldingSchema = new Schema({
   uniqueIdentifier: {
     type: String,
     required: true,
     index: true
   },
-  fiDataId: {
+  isin: {
     type: String,
     required: true,
-    unique: true
+    index: true
   },
-  accountRefNumber: { type: String },
-  maskedAccNumber: { type: String },
-  accountType: { type: String, default: 'ETF' },
   
-  // FIP Details
-  fipId: { type: String },
-  fipName: { type: String },
+  // ETF Details
+  issuerName: { type: String },
+  isinDescription: { type: String },
   
-  // Data Status
-  dataFetched: { type: Boolean, default: false },
-  lastFetchDateTime: { type: Date },
+  // Holdings
+  units: { type: Number },
+  lastTradedPrice: { type: Number },
+  avgTradedPrice: { type: Number },
+  currentValue: { type: Number },
   
-  // Consent Details
-  latestConsentPurposeText: { type: String },
-  latestConsentExpiryTime: { type: Date },
-  consentPurposeVersion: { type: String },
+  // NAV
+  nav: { type: Number },
+  navDate: { type: Date },
   
-  // Values
-  currentValue: { type: Number, default: 0 },
+  // Portfolio Weight
+  portfolioWeightagePercent: { type: Number },
   
-  // Raw Data
-  fiData: { type: Schema.Types.Mixed },
+  // Previous Day Details
+  prevDetails: {
+    percentageChange: { type: Number },
+    priceChange: { type: Number },
+    lastFetchTime: { type: Date },
+    holdingIsin: { type: String },
+    totalUnits: { type: Number },
+    currentValue: { type: Number }
+  },
+  
+  // Broker-wise breakdown
+  brokers: [{
+    brokerName: { type: String },
+    brokerId: { type: String },
+    units: { type: Number },
+    lastTradedPrice: { type: Number },
+    currentValue: { type: Number }
+  }],
   
   // Metadata
+  lastFetchTime: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
+
+// Compound unique index
+ETFHoldingSchema.index({ uniqueIdentifier: 1, isin: 1 }, { unique: true });
 
 /**
  * ETF Insights Schema
@@ -94,14 +80,14 @@ const ETFInsightsSchema = new Schema({
   totalHoldings: { type: Number },
   totalDemats: { type: Number },
   
-  // Returns
+  // Returns Summary
   returnsSummary: {
     dailyReturns: { type: Number },
     dailyReturnsPercentage: { type: Number }
   },
   
-  // Demat-wise Distribution
-  dematWiseDistribution: [DematDistributionSchema],
+  // Demat-wise Distribution (complex nested structure)
+  dematWiseDistribution: { type: Schema.Types.Mixed },
   
   // Metadata
   createdAt: { type: Date, default: Date.now },
@@ -132,25 +118,25 @@ const ETFTransactionSchema = new Schema({
   
   // Transaction Details
   transactionDateTime: { type: Date, index: true },
+  units: { type: Number },
   type: { type: String }, // BUY, SELL
   narration: { type: String },
-  units: { type: Number },
   nav: { type: Number },
   
   // Metadata
   createdAt: { type: Date, default: Date.now }
 });
 
-// Compound index
+// Compound indexes
 ETFTransactionSchema.index({ uniqueIdentifier: 1, transactionDateTime: -1 });
+ETFTransactionSchema.index({ isin: 1, transactionDateTime: -1 });
 
-const ETFAccount = mongoose.model('ETFAccount', ETFAccountSchema);
+const ETFHolding = mongoose.model('ETFHolding', ETFHoldingSchema);
 const ETFInsights = mongoose.model('ETFInsights', ETFInsightsSchema);
 const ETFTransaction = mongoose.model('ETFTransaction', ETFTransactionSchema);
 
 module.exports = {
-  ETFAccount,
+  ETFHolding,
   ETFInsights,
   ETFTransaction
 };
-

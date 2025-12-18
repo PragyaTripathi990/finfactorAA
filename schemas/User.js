@@ -2,17 +2,18 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 /**
- * FI Data Schema - Embedded in User
+ * FI Data Summary Schema - Embedded in User
+ * Represents the fiDatas object from /pfm/api/v2/user-details
  */
-const FIDataSchema = new Schema({
+const FIDataSummarySchema = new Schema({
   totalFiData: { type: Number, default: 0 },
   totalFiDataToBeFetched: { type: Number, default: 0 },
   lastFetchDate: { type: Date },
-  currentBalance: { type: Number },
+  currentBalance: { type: Number },  // For DEPOSIT type
   currentValue: { type: Number },
   costValue: { type: Number },
-  totalHoldings: { type: Number },
-  totalBrokers: { type: Number },
+  totalHoldings: { type: Number, default: 0 },
+  totalBrokers: { type: Number, default: 0 },
   dataSourceDetails: [{
     dataResourceType: { type: String }, // AA, MFC, etc.
     lastFetchDate: { type: Date }
@@ -21,7 +22,8 @@ const FIDataSchema = new Schema({
 
 /**
  * User Schema
- * Stores user details from /pfm/api/v2/user-details
+ * Stores user details from /pfm/api/v2/user-subscriptions and /pfm/api/v2/user-details
+ * Based on Official WealthScape API Documentation
  */
 const UserSchema = new Schema({
   uniqueIdentifier: {
@@ -30,31 +32,31 @@ const UserSchema = new Schema({
     unique: true,
     index: true
   },
-  mobileNumber: { type: String },
-  pan: { type: String },
+  mobileNumber: { type: String, index: true },
+  pan: { type: String, index: true },
   email: { type: String },
   
-  // Subscription Details
+  // Subscription Details (from /pfm/api/v2/user-subscriptions)
   subscriptionStatus: {
     type: String,
     enum: ['YES', 'NO'],
     default: 'NO'
   },
-  subscriptionStartDate: { type: Date },
-  subscriptionEndDate: { type: Date },
+  subscriptionStart: { type: Date },  // subscriptionStartDate
+  subscriptionEnd: { type: Date },    // subscriptionEndDate
   
-  // Financial Data Summary
+  // Financial Data Summary (from /pfm/api/v2/user-details - fiDatas object)
   fiDatas: {
-    DEPOSIT: FIDataSchema,
-    TERM_DEPOSIT: FIDataSchema,
-    RECURRING_DEPOSIT: FIDataSchema,
-    EQUITIES: FIDataSchema,
-    MUTUAL_FUNDS: FIDataSchema,
-    NPS: FIDataSchema,
-    ETF: FIDataSchema
+    DEPOSIT: FIDataSummarySchema,
+    TERM_DEPOSIT: FIDataSummarySchema,
+    RECURRING_DEPOSIT: FIDataSummarySchema,
+    EQUITIES: FIDataSummarySchema,
+    MUTUAL_FUNDS: FIDataSummarySchema,
+    NPS: FIDataSummarySchema,
+    ETF: FIDataSummarySchema
   },
   
-  // Total Portfolio Value
+  // Total Portfolio Value (computed from fiDatas)
   totalPortfolioValue: { type: Number, default: 0 },
   
   // Metadata
@@ -69,7 +71,7 @@ UserSchema.pre('save', function(next) {
   next();
 });
 
-// Calculate total portfolio value
+// Calculate total portfolio value from fiDatas
 UserSchema.methods.calculateTotalValue = function() {
   let total = 0;
   if (this.fiDatas) {
@@ -86,4 +88,3 @@ UserSchema.methods.calculateTotalValue = function() {
 };
 
 module.exports = mongoose.model('User', UserSchema);
-

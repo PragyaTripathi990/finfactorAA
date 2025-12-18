@@ -3,19 +3,20 @@ const Schema = mongoose.Schema;
 
 /**
  * Mutual Fund Folio Schema (embedded)
+ * Used in MutualFundHolding folios array
  */
 const FolioSchema = new Schema({
   fipId: { type: String },
   fiDataId: { type: String },
   maskedAccNumber: { type: String },
   accountRefNumber: { type: String },
-  folioNo: { type: String },
   currentValue: { type: Number },
+  folioNo: { type: String },
   closingUnits: { type: Number },
   lienUnits: { type: Number },
-  lockingUnits: { type: Number },
   nav: { type: Number },
   navDate: { type: Date },
+  lockingUnits: { type: Number },
   lastFetchTime: { type: Date },
   prevDetails: {
     percentageChange: { type: Number },
@@ -30,6 +31,7 @@ const FolioSchema = new Schema({
 /**
  * Mutual Fund Holding Schema
  * Stores data from /pfm/api/v2/mutual-fund/user-linked-accounts/holding-folio
+ * Aggregated by ISIN with folios breakdown
  */
 const MutualFundHoldingSchema = new Schema({
   uniqueIdentifier: {
@@ -46,7 +48,7 @@ const MutualFundHoldingSchema = new Schema({
   // Scheme Details
   amc: { type: String },
   amcName: { type: String },
-  registrar: { type: String },
+  registrar: { type: String },  // CAMS, KFINTECH, etc.
   schemeCode: { type: String },
   schemaOption: { type: String }, // GROWTH, IDCW
   schemaTypes: { type: String }, // EQUITY, DEBT, HYBRID
@@ -56,9 +58,9 @@ const MutualFundHoldingSchema = new Schema({
   amfiCode: { type: String },
   
   // Holdings Details
-  closingUnits: { type: Number },
-  lienUnits: { type: Number },
-  lockingUnits: { type: Number },
+  closingUnits: { type: Number, default: 0 },
+  lienUnits: { type: Number, default: 0 },
+  lockingUnits: { type: Number, default: 0 },
   
   // NAV Details
   nav: { type: Number },
@@ -69,7 +71,7 @@ const MutualFundHoldingSchema = new Schema({
   currentValue: { type: Number },
   costValue: { type: Number },
   
-  // Performance
+  // Previous Day Details (for daily change tracking)
   prevDetails: {
     percentageChange: { type: Number },
     priceChange: { type: Number },
@@ -79,7 +81,7 @@ const MutualFundHoldingSchema = new Schema({
     currentValue: { type: Number }
   },
   
-  // Folios
+  // Folios (array of folio-level details)
   folios: [FolioSchema],
   
   // Metadata
@@ -88,7 +90,7 @@ const MutualFundHoldingSchema = new Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-// Compound index
+// Compound unique index
 MutualFundHoldingSchema.index({ uniqueIdentifier: 1, isin: 1 }, { unique: true });
 
 /**
@@ -146,9 +148,10 @@ const MutualFundTransactionSchema = new Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-// Compound index
+// Compound indexes
 MutualFundTransactionSchema.index({ uniqueIdentifier: 1, transactionDateTime: -1 });
 MutualFundTransactionSchema.index({ isin: 1, transactionDateTime: -1 });
+MutualFundTransactionSchema.index({ folioNo: 1 });
 
 /**
  * Mutual Fund Insights Schema
@@ -206,14 +209,61 @@ const MutualFundInsightsSchema = new Schema({
     percentage: { type: Number }
   }],
   
+  // Detailed Holdings with per-folio insights (complex nested structure)
+  holdingsInsights: { type: Schema.Types.Mixed },
+  
   // Metadata
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
 
 /**
+ * Mutual Fund Analysis Schema
+ * Stores data from /pfm/api/v2/mutual-fund/analysis
+ */
+const MutualFundAnalysisSchema = new Schema({
+  uniqueIdentifier: {
+    type: String,
+    required: true,
+    index: true
+  },
+  
+  // FIP Level (if applicable)
+  fipId: { type: String },
+  fipName: { type: String },
+  
+  // Summary
+  totalFiData: { type: Number, default: 0 },
+  totalFiDataToBeFetched: { type: Number, default: 0 },
+  currentValue: { type: Number, default: 0 },
+  costValue: { type: Number, default: 0 },
+  totalHoldings: { type: Number, default: 0 },
+  
+  // Category Breakdown
+  schemeCategory: [{
+    schemeCategory: { type: String },
+    currentValue: { type: Number },
+    totalHoldings: { type: Number }
+  }],
+  
+  // Type Breakdown
+  schemeType: [{
+    schemeTypes: { type: String },
+    currentValue: { type: Number },
+    totalHoldings: { type: Number }
+  }],
+  
+  // Metadata
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Compound unique index
+MutualFundAnalysisSchema.index({ uniqueIdentifier: 1, fipId: 1 }, { unique: true });
+
+/**
  * MFC Consent Schema
- * Stores data from /pfm/api/v2/mutual-fund/mfc/consent-request
+ * Stores data from /pfm/api/v2/mutual-fund/mfc/consent-request and consent-approve
  */
 const MFCConsentSchema = new Schema({
   uniqueIdentifier: {
@@ -242,12 +292,13 @@ const MFCConsentSchema = new Schema({
 const MutualFundHolding = mongoose.model('MutualFundHolding', MutualFundHoldingSchema);
 const MutualFundTransaction = mongoose.model('MutualFundTransaction', MutualFundTransactionSchema);
 const MutualFundInsights = mongoose.model('MutualFundInsights', MutualFundInsightsSchema);
+const MutualFundAnalysis = mongoose.model('MutualFundAnalysis', MutualFundAnalysisSchema);
 const MFCConsent = mongoose.model('MFCConsent', MFCConsentSchema);
 
 module.exports = {
   MutualFundHolding,
   MutualFundTransaction,
   MutualFundInsights,
+  MutualFundAnalysis,
   MFCConsent
 };
-

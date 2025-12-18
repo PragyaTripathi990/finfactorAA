@@ -2,10 +2,11 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 /**
- * Recurring Deposit Account Schema
+ * Recurring Deposit Schema
  * Stores data from /pfm/api/v2/recurring-deposit/user-linked-accounts
+ * Links to LinkedAccount via fiDataId
  */
-const RecurringDepositAccountSchema = new Schema({
+const RecurringDepositSchema = new Schema({
   uniqueIdentifier: {
     type: String,
     required: true,
@@ -14,38 +15,34 @@ const RecurringDepositAccountSchema = new Schema({
   fiDataId: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    index: true
   },
-  accountRefNumber: { type: String },
-  maskedAccNumber: { type: String },
-  accountName: { type: String },
-  accountType: { type: String, default: 'RECURRING_DEPOSIT' },
   
-  // FIP Details
+  // FIP Info
   fipId: { type: String },
   fipName: { type: String },
   
   // RD Details
-  monthlyInstallment: { type: Number },
-  currentValue: { type: Number },
-  maturityAmount: { type: Number },
-  maturityDate: { type: Date },
+  monthlyDeposit: { type: Number },
   interestRate: { type: Number },
   tenureMonths: { type: Number },
-  installmentsPaid: { type: Number },
+  
+  // Dates
+  openingDate: { type: Date },
+  maturityDate: { type: Date },
+  
+  // Values
+  totalDeposits: { type: Number },
+  maturityAmount: { type: Number },
+  currentValue: { type: Number },
+  
+  // Installments
+  installmentsPaid: { type: Number, default: 0 },
   totalInstallments: { type: Number },
   
-  // Data Status
-  dataFetched: { type: Boolean, default: false },
-  lastFetchDateTime: { type: Date },
-  
-  // Consent Details
-  latestConsentPurposeText: { type: String },
-  latestConsentExpiryTime: { type: Date },
-  consentPurposeVersion: { type: String },
-  
-  // Raw Data
-  fiData: { type: Schema.Types.Mixed },
+  // Status
+  accountStatus: { type: String },
   
   // Metadata
   createdAt: { type: Date, default: Date.now },
@@ -74,10 +71,7 @@ const RecurringDepositTransactionSchema = new Schema({
   },
   amount: { type: Number, required: true },
   narration: { type: String },
-  type: {
-    type: String,
-    enum: ['CREDIT', 'DEBIT']
-  },
+  type: { type: String },
   mode: { type: String },
   balance: { type: Number },
   transactionDateTime: { type: Date, index: true },
@@ -91,11 +85,10 @@ const RecurringDepositTransactionSchema = new Schema({
 // Compound index
 RecurringDepositTransactionSchema.index({ accountId: 1, transactionDateTime: -1 });
 
-const RecurringDepositAccount = mongoose.model('RecurringDepositAccount', RecurringDepositAccountSchema);
+const RecurringDeposit = mongoose.model('RecurringDeposit', RecurringDepositSchema);
 const RecurringDepositTransaction = mongoose.model('RecurringDepositTransaction', RecurringDepositTransactionSchema);
 
 module.exports = {
-  RecurringDepositAccount,
+  RecurringDeposit,
   RecurringDepositTransaction
 };
-

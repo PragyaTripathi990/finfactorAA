@@ -747,23 +747,131 @@ export async function getDepositAccountStatementDownload(): Promise<any> {
 }
 
 /**
+ * Helper function to get accountId from Finvu Bank
+ */
+async function getFinvuBankAccountId(uniqueIdentifier: string): Promise<string | null> {
+  try {
+    console.log('🔍 Step 1: Calling user-linked-accounts API...');
+    
+    // Get linked accounts
+    const linkedAccountsResponse = await makeAuthenticatedRequest<any>(
+      '/pfm/api/v2/deposit/user-linked-accounts',
+      {
+        uniqueIdentifier: uniqueIdentifier,
+        filterZeroValueAccounts: 'false',
+        filterZeroValueHoldings: 'false',
+      }
+    );
+    
+    const linkedAccounts = linkedAccountsResponse.data || linkedAccountsResponse;
+    
+    console.log('📦 Step 2: Received linked accounts response');
+    
+    if (!linkedAccounts?.fipData || !Array.isArray(linkedAccounts.fipData)) {
+      console.error('❌ No fipData found in linked accounts');
+      console.log('Full response:', JSON.stringify(linkedAccounts, null, 2));
+      return null;
+    }
+    
+    console.log('📋 Available FIPs:', linkedAccounts.fipData.map((fip: any) => fip.fipName));
+    
+    // Find the first available account in fipData list
+    // Look for Finvu first, then fallback to first FIP with accounts
+    let targetFip: any = null;
+    
+    // Try to find Finvu Bank (excluding Dhanagar)
+    targetFip = linkedAccounts.fipData.find((fip: any) => {
+      const fipName = fip.fipName || '';
+      return fipName.includes('Finvu') && !fipName.includes('Dhanagar');
+    });
+    
+    // If Finvu not found, use first FIP with linked accounts
+    if (!targetFip) {
+      console.log('⚠️ Finvu Bank not found, using first available FIP');
+      targetFip = linkedAccounts.fipData.find((fip: any) => 
+        fip.linkedAccounts && Array.isArray(fip.linkedAccounts) && fip.linkedAccounts.length > 0
+      );
+    }
+    
+    if (!targetFip) {
+      console.error('❌ No FIP found with linked accounts');
+      return null;
+    }
+    
+    console.log('✅ Step 3: Found FIP:', targetFip.fipName);
+    
+    if (!targetFip.linkedAccounts || !Array.isArray(targetFip.linkedAccounts) || targetFip.linkedAccounts.length === 0) {
+      console.error('❌ FIP has no linked accounts');
+      return null;
+    }
+    
+    // Extract accountRefNumber from first account
+    const account = targetFip.linkedAccounts[0];
+    const targetId = account.accountRefNumber;
+    
+    console.log('🎯 Step 4: Extracted accountRefNumber:', targetId);
+    console.log('📄 Full account object:', JSON.stringify(account, null, 2));
+    
+    return targetId;
+  } catch (error) {
+    console.error('❌ Error getting account ID:', error);
+    return null;
+  }
+}
+
+/**
  * Deposit - Get insights
  */
 export async function getDepositInsights(): Promise<any> {
   try {
+    const uniqueIdentifier = '8956545791';
+    
+    // Step 1: Get accountId from Finvu Bank using the helper
+    const targetId = await getFinvuBankAccountId(uniqueIdentifier);
+    
+    if (!targetId) {
+      console.error('❌ No accountId found from Finvu Bank for insights');
+      return null;
+    }
+    
+    console.log('✅ Using accountId for insights:', targetId);
+    
+    // Step 2: Calculate date range (from 2025-01-01 to today)
+    const today = new Date();
+    const toDate = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    
+    // Step 3: Build request body - MUST use accountIds as ARRAY
+    const requestBody = {
+      uniqueIdentifier: uniqueIdentifier,
+      accountIds: [targetId], // ✅ Array format - crucial!
+      from: '2025-01-01',
+      to: toDate,
+      frequency: 'MONTHLY',
+    };
+    
+    console.log('📤 Insights API Request:', JSON.stringify(requestBody, null, 2));
+    
+    // Step 4: Make the API call
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/deposit/insights',
-      {
-        uniqueIdentifier: '6397585098',
-        accountIds: [],
-        from: '2024-07-01',
-        to: '2024-08-31',
-        frequency: 'MONTHLY',
-      }
+      requestBody
     );
+    
+    console.log('📥 Insights API Response:', JSON.stringify(response, null, 2));
+    
+    // Handle nested response structure
+    // API returns: { depositInsights: { accountIds, balance, incoming, outgoing } }
+    if (response?.depositInsights) {
+      return response.depositInsights;
+    }
+    
+    if (response?.data?.depositInsights) {
+      return response.data.depositInsights;
+    }
+    
     return response.data || response;
   } catch (error) {
-    console.error('Error fetching deposit insights:', error);
+    console.error('❌ Error fetching deposit insights:', error);
     return null;
   }
 }
@@ -833,14 +941,31 @@ export async function getEquitiesETFsAccountStatement(): Promise<any> {
  */
 export async function getDepositAccountStatement(): Promise<any> {
   try {
+    const uniqueIdentifier = '8956545791';
+    
+    // Get accountId from Finvu Bank
+    const accountId = await getFinvuBankAccountId(uniqueIdentifier);
+    
+    if (!accountId) {
+      console.error('No accountId found from Finvu Bank');
+      return null;
+    }
+    
+    // Now fetch the account statement
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/deposit/user-account-statement',
       {
-        uniqueIdentifier: '8956545791',
-        accountId: '60e38f9b-50da-46b2-bb43-3ddb5b9e63c1',
-        dateRangeFrom: '2024-01-01',
+        uniqueIdentifier: uniqueIdentifier,
+        accountId: accountId,
+        dateRangeFrom: '2025-01-01',
       }
     );
+    
+    // Handle array response directly
+    if (Array.isArray(response)) {
+      return response;
+    }
+    
     return response.data || response;
   } catch (error) {
     console.error('Error fetching deposit account statement:', error);

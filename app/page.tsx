@@ -53,6 +53,10 @@ import SubTabs from './components/SubTabs';
 import NPSLinkedAccountsDisplay from './components/NPSLinkedAccountsDisplay';
 import MutualFundsDisplay from './components/MutualFundsDisplay';
 import FIPsDisplay from './components/FIPsDisplay';
+import DepositLinkedAccountsDisplay from './components/DepositLinkedAccountsDisplay';
+import UserDetailsDisplay from './components/UserDetailsDisplay';
+import AccountStatementDisplay from './components/AccountStatementDisplay';
+import DepositInsightsDisplay from './components/DepositInsightsDisplay';
 import BrokersDisplay from './components/BrokersDisplay';
 import { camelToTitleCase, formatValue, flattenObject } from '@/lib/formatters';
 
@@ -406,6 +410,18 @@ export default function DashboardPage() {
 
       case 'deposit':
         const depData = data[`dep-${activeSubTab.deposit}`];
+        if (activeSubTab.deposit === 'linked') {
+          return <DepositLinkedAccountsDisplay data={depData} />;
+        }
+        if (activeSubTab.deposit === 'details') {
+          return <UserDetailsDisplay data={depData} />;
+        }
+        if (activeSubTab.deposit === 'statement') {
+          return <AccountStatementDisplay data={depData} />;
+        }
+        if (activeSubTab.deposit === 'insights') {
+          return <DepositInsightsDisplay data={depData} />;
+        }
         return <DataTable data={depData} maxItems={10} />;
 
       case 'firequest':

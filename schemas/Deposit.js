@@ -2,8 +2,10 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 /**
- * Deposit Account Schema
- * Stores data from /pfm/api/v2/deposit/user-linked-accounts
+ * Deposit Account Schema (Extended Details)
+ * Stores extended deposit account details
+ * Links to LinkedAccount via fiDataId
+ * Based on /pfm/api/v2/deposit/user-linked-accounts
  */
 const DepositAccountSchema = new Schema({
   uniqueIdentifier: {
@@ -14,36 +16,19 @@ const DepositAccountSchema = new Schema({
   fiDataId: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    index: true
   },
-  accountRefNumber: { type: String },
-  maskedAccNumber: { type: String },
-  accountName: { type: String },
-  accountType: { type: String, default: 'DEPOSIT' },
-  
-  // FIP Details
-  fipId: { type: String },
-  fipName: { type: String },
   
   // Account Details
   currentBalance: { type: Number, default: 0 },
   availableBalance: { type: Number },
   accountStatus: { type: String },
+  
+  // Bank Details
   ifscCode: { type: String },
   micrCode: { type: String },
   branch: { type: String },
-  
-  // Data Status
-  dataFetched: { type: Boolean, default: false },
-  lastFetchDateTime: { type: Date },
-  
-  // Consent Details
-  latestConsentPurposeText: { type: String },
-  latestConsentExpiryTime: { type: Date },
-  consentPurposeVersion: { type: String },
-  
-  // Raw Data
-  fiData: { type: Schema.Types.Mixed },
   
   // Metadata
   createdAt: { type: Date, default: Date.now },
@@ -87,7 +72,7 @@ const DepositTransactionSchema = new Schema({
   // Additional Details
   transactionId: { type: String },
   chequeNo: { type: String },
-  category: { type: String }, // For categorization
+  category: { type: String }, // For expense categorization
   
   // Metadata
   createdAt: { type: Date, default: Date.now }
@@ -115,36 +100,8 @@ const DepositInsightsSchema = new Schema({
     enum: ['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']
   },
   
-  // Period Insights
-  insights: [{
-    period: { type: String }, // "July 2024", "Week 1", etc.
-    startDate: { type: Date },
-    endDate: { type: Date },
-    totalCredits: { type: Number },
-    totalDebits: { type: Number },
-    netFlow: { type: Number },
-    averageBalance: { type: Number },
-    transactionCount: { type: Number },
-    creditCount: { type: Number },
-    debitCount: { type: Number }
-  }],
-  
-  // Summary
-  summary: {
-    totalPeriodCredits: { type: Number },
-    totalPeriodDebits: { type: Number },
-    netPeriodFlow: { type: Number },
-    averagePeriodBalance: { type: Number },
-    totalTransactions: { type: Number }
-  },
-  
-  // Category Breakdown
-  categoryBreakdown: [{
-    category: { type: String },
-    totalAmount: { type: Number },
-    transactionCount: { type: Number },
-    percentage: { type: Number }
-  }],
+  // Insights Data (complex nested structure from API)
+  insightsData: { type: Schema.Types.Mixed },
   
   // Metadata
   createdAt: { type: Date, default: Date.now },
@@ -163,4 +120,3 @@ module.exports = {
   DepositTransaction,
   DepositInsights
 };
-

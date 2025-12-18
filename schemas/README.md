@@ -1,324 +1,196 @@
-# Finfactor AA MongoDB Schemas
+# WealthScape API MongoDB Schemas
 
-This folder contains all Mongoose schemas for storing Finfactor Account Aggregator API data in MongoDB.
+This folder contains Mongoose schemas for the WealthScape API (Finfactor/Finvu) based on the **Official API Documentation**.
 
-## 📁 Schema Files
+## Schema Structure Overview
 
-| File | Description |
-|------|-------------|
-| `User.js` | User profile and portfolio summary |
-| `Subscription.js` | User subscription details |
-| `LinkedAccount.js` | Base schema for all linked accounts |
-| `TermDeposit.js` | Term Deposit accounts and transactions |
-| `RecurringDeposit.js` | Recurring Deposit accounts and transactions |
-| `MutualFund.js` | Mutual Fund holdings, transactions, insights |
-| `ETF.js` | ETF accounts, insights, and transactions |
-| `Equities.js` | Equities holdings, demat accounts, transactions |
-| `Deposit.js` | Savings/Current accounts, transactions, insights |
-| `NPS.js` | NPS (National Pension System) accounts |
-| `Consent.js` | Consent management and history |
-| `FIP.js` | Financial Information Providers master data |
-| `Broker.js` | Broker master data |
-| `Transaction.js` | Unified transaction schema for all asset types |
-| `FIRequest.js` | FI Request tracking |
-| `MutualFundMaster.js` | Mutual Fund master data |
-| `db.js` | MongoDB connection utilities |
-| `index.js` | Exports all schemas |
+### Core Schemas
 
-## 🚀 Quick Start
+#### `User.js`
+- **Purpose**: User profile and subscription management
+- **APIs**: `/pfm/api/v2/user-subscriptions`, `/pfm/api/v2/user-details`
+- **Key Fields**:
+  - `uniqueIdentifier` (mobile number)
+  - `subscriptionStatus`, `subscriptionStart`, `subscriptionEnd`
+  - `fiDatas` - Object containing FI data summaries per type (DEPOSIT, TERM_DEPOSIT, etc.)
+  - `totalPortfolioValue` - Computed from fiDatas
 
-### 1. Install Dependencies
+#### `LinkedAccount.js`
+- **Purpose**: Base schema for all linked accounts across all FI types
+- **APIs**: All `/pfm/api/v2/*/user-linked-accounts` endpoints
+- **Key Fields**:
+  - `fiDataId` - Unique account identifier
+  - `accountType` - DEPOSIT, TERM_DEPOSIT, RECURRING_DEPOSIT, EQUITIES, MUTUAL_FUNDS, NPS, ETF
+  - `fipId`, `fipName` - Financial Information Provider
+  - `dataFetched`, `lastFetchDateTime` - Data sync status
+  - `latestConsentPurposeText`, `latestConsentExpiryTime` - Consent info
+  - `fiData` - Raw JSON data from API
 
-```bash
-npm install mongoose
-```
+---
 
-### 2. Set Environment Variable
+## Module-Specific Schemas
 
-```bash
-export MONGODB_URI="mongodb://localhost:27017/finfactor_aa"
-```
+### Deposit Module (`/pfm/api/v2/deposit/*`)
 
-Or create a `.env` file:
+#### `Deposit.js`
+- **DepositAccount**: Extended deposit account details (balance, IFSC, branch)
+- **DepositTransaction**: Bank statement transactions
+- **DepositInsights**: Spending analytics and categorization
 
-```env
-MONGODB_URI=mongodb://localhost:27017/finfactor_aa
-```
+### Term Deposit Module (`/pfm/api/v2/term-deposit/*`)
 
-### 3. Connect to MongoDB
+#### `TermDeposit.js`
+- **TermDeposit**: Fixed deposit details (principal, maturity, interest rate)
+- **TermDepositTransaction**: TD transaction history
+
+### Recurring Deposit Module (`/pfm/api/v2/recurring-deposit/*`)
+
+#### `RecurringDeposit.js`
+- **RecurringDeposit**: RD details (monthly installment, tenure, installments paid)
+- **RecurringDepositTransaction**: RD transaction history
+
+### Mutual Fund Module (`/pfm/api/v2/mutual-fund/*`)
+
+#### `MutualFund.js`
+- **MutualFundHolding**: ISIN-level aggregated holdings with folios array
+  - Stores folios as embedded documents
+  - Includes `prevDetails` for daily change tracking
+- **MutualFundTransaction**: MF transactions with tax details (STT, stamp duty)
+- **MutualFundInsights**: Portfolio analytics (XIRR, distributions by category/AMC/sector)
+- **MutualFundAnalysis**: FIP-level category and type breakdowns
+- **MFCConsent**: MFC OTP consent flow
+
+### Equities Module (`/pfm/api/v2/equities/*`)
+
+#### `Equities.js`
+- **EquitiesHolding**: ISIN-level aggregated holdings with broker breakdown
+  - Stores brokers as embedded documents
+  - Includes portfolio weightage
+- **EquitiesDematAccount**: Demat-wise holdings (from `/demat-holding` endpoint)
+- **EquitiesTransaction**: Buy/sell transactions
+
+### ETF Module (`/pfm/api/v2/etf/*`)
+
+#### `ETF.js`
+- **ETFHolding**: ETF holdings by ISIN (similar to equities)
+- **ETFInsights**: Demat-wise distribution with returns summary
+- **ETFTransaction**: ETF buy/sell transactions
+
+### NPS Module (`/pfm/api/v2/nps/*`)
+
+#### `NPS.js`
+- **NPSAccount**: PRAN accounts with holder details
+- **NPSSummary**: Aggregated NPS summary
+
+### Consent Module
+
+#### `Consent.js`
+- **AccountConsent**: Latest consent per account (from `/pfm/api/v2/account-consents-latest`)
+- **ConsentRequest**: Consent initiation flow (from `/pfm/api/v1/submit-consent-request`)
+- **FIRequest**: FI data refresh requests (from `/pfm/api/v2/firequest-user`)
+- **AccountDelinkHistory**: Account delink audit trail (from `/pfm/api/v2/user-account-delink`)
+
+---
+
+## Master Data Schemas
+
+### `FIP.js`
+- Financial Information Providers (banks, RTAs, depositories)
+- **API**: `/pfm/api/v2/fips`
+
+### `Broker.js`
+- Stock brokers
+- **API**: `/pfm/api/v2/brokers`
+
+---
+
+## Schema Design Principles
+
+1. **Normalization**: Linked accounts stored separately from extended details
+2. **Embedded Documents**: Used for nested structures (folios, brokers, distributions)
+3. **Mixed Types**: Used for complex nested JSON structures from API
+4. **Indexes**: Compound indexes on common query patterns
+5. **Timestamps**: Auto-updated `createdAt` and `updatedAt` fields
+
+---
+
+## Usage Example
 
 ```javascript
-const { connectDB } = require('./schemas/db');
+const { User, LinkedAccount, MutualFundHolding } = require('./schemas');
 
-// Connect to MongoDB
-await connectDB();
-```
-
-### 4. Import Schemas
-
-```javascript
-// Import all schemas
-const schemas = require('./schemas');
-
-// Or import specific schemas
-const User = require('./schemas/User');
-const { MutualFundHolding, MutualFundTransaction } = require('./schemas/MutualFund');
-const { TermDepositAccount, TermDepositTransaction } = require('./schemas/TermDeposit');
-```
-
-## 📊 Usage Examples
-
-### Save User Details
-
-```javascript
-const User = require('./schemas/User');
-
+// Create user
 const user = new User({
   uniqueIdentifier: '8956545791',
   mobileNumber: '8956545791',
   subscriptionStatus: 'YES',
-  subscriptionStartDate: new Date('2025-11-25'),
-  subscriptionEndDate: new Date('2026-11-25'),
-  fiDatas: {
-    DEPOSIT: {
-      totalFiData: 17,
-      totalFiDataToBeFetched: 0,
-      currentBalance: 1218000.00
-    },
-    MUTUAL_FUNDS: {
-      totalFiData: 3,
-      totalFiDataToBeFetched: 0,
-      currentValue: 1834500.81,
-      costValue: 1116560.01,
-      totalHoldings: 11
-    }
-  }
+  subscriptionStart: new Date('2024-01-01'),
+  subscriptionEnd: new Date('2026-01-01')
 });
 
-await user.save();
-```
-
-### Save Mutual Fund Holding
-
-```javascript
-const { MutualFundHolding } = require('./schemas/MutualFund');
-
-const holding = new MutualFundHolding({
+// Create linked account
+const linkedAccount = new LinkedAccount({
   uniqueIdentifier: '8956545791',
-  isin: 'INF209K01YY3',
-  amc: 'HDFC Mutual Fund',
-  schemaCategory: 'Equity',
-  schemaTypes: 'Large Cap',
-  isinDescription: 'HDFC Top 100 Fund - Direct Plan - Growth',
-  closingUnits: 500.25,
-  nav: 850.50,
-  currentValue: 425375.13,
-  costValue: 350000.00
+  fiDataId: '60e38f9b-50da-46b2-bb43-3ddb5b9e63c1',
+  accountType: 'DEPOSIT',
+  fipId: 'HDFC-FIP',
+  dataFetched: true
 });
 
-await holding.save();
-```
-
-### Save Transaction
-
-```javascript
-const Transaction = require('./schemas/Transaction');
-
-const txn = new Transaction({
+// Create MF holding with folios
+const mfHolding = new MutualFundHolding({
   uniqueIdentifier: '8956545791',
-  accountId: 'b986d95d-709e-45a7-8548-39814173ec9c',
-  txnId: 'TXN123456',
-  assetType: 'MUTUAL_FUNDS',
-  transactionDateTime: new Date(),
-  type: 'PURCHASE',
-  amount: 10000,
-  units: 11.75,
-  nav: 850.50,
-  isin: 'INF209K01YY3',
-  mode: 'SIP'
+  isin: 'INF179K01UT0',
+  amc: 'HDFC AMC',
+  closingUnits: 245.678,
+  nav: 925.45,
+  currentValue: 227385.78,
+  folios: [{
+    fipId: 'CAMS-FIP',
+    folioNo: 'FOLIO001234',
+    closingUnits: 245.678,
+    nav: 925.45
+  }]
 });
-
-await txn.save();
 ```
 
-### Query Transactions by Date Range
+---
 
-```javascript
-const Transaction = require('./schemas/Transaction');
+## API Endpoint Mapping
 
-const transactions = await Transaction.getByDateRange(
-  '8956545791',
-  new Date('2024-01-01'),
-  new Date('2024-12-31'),
-  'MUTUAL_FUNDS'
-);
-```
+| Schema | API Endpoint |
+|--------|--------------|
+| User | `/pfm/api/v2/user-subscriptions`, `/pfm/api/v2/user-details` |
+| LinkedAccount | All `/pfm/api/v2/*/user-linked-accounts` |
+| DepositAccount | `/pfm/api/v2/deposit/user-linked-accounts` |
+| DepositTransaction | `/pfm/api/v2/deposit/user-account-statement` |
+| DepositInsights | `/pfm/api/v2/deposit/insights` |
+| TermDeposit | `/pfm/api/v2/term-deposit/user-linked-accounts` |
+| TermDepositTransaction | `/pfm/api/v2/term-deposit/user-account-statement` |
+| RecurringDeposit | `/pfm/api/v2/recurring-deposit/user-linked-accounts` |
+| RecurringDepositTransaction | `/pfm/api/v2/recurring-deposit/user-account-statement` |
+| MutualFundHolding | `/pfm/api/v2/mutual-fund/user-linked-accounts/holding-folio` |
+| MutualFundTransaction | `/pfm/api/v2/mutual-fund/user-account-statement` |
+| MutualFundInsights | `/pfm/api/v2/mutual-fund/insights` |
+| MutualFundAnalysis | `/pfm/api/v2/mutual-fund/analysis` |
+| MFCConsent | `/pfm/api/v2/mutual-fund/mfc/consent-request` |
+| EquitiesHolding | `/pfm/api/v2/equities/user-linked-accounts/holding-broker` |
+| EquitiesDematAccount | `/pfm/api/v2/equities/user-linked-accounts/demat-holding` |
+| EquitiesTransaction | `/pfm/api/v2/equities/user-account-statement` |
+| ETFHolding | `/pfm/api/v2/etf/user-linked-accounts` |
+| ETFInsights | `/pfm/api/v2/etf/insights` |
+| ETFTransaction | `/pfm/api/v2/etf/user-account-statement` |
+| NPSAccount | `/pfm/api/v2/nps/user-linked-accounts` |
+| AccountConsent | `/pfm/api/v2/account-consents-latest` |
+| ConsentRequest | `/pfm/api/v1/submit-consent-request` |
+| FIRequest | `/pfm/api/v2/firequest-user`, `/pfm/api/v2/firequest-account` |
 
-### Get Transaction Summary
+---
 
-```javascript
-const summary = await Transaction.getSummary(
-  '8956545791',
-  new Date('2024-01-01'),
-  new Date('2024-12-31')
-);
+## Notes
 
-// Returns: [
-//   { _id: 'MUTUAL_FUNDS', totalTransactions: 50, totalAmount: 500000, avgAmount: 10000 },
-//   { _id: 'DEPOSIT', totalTransactions: 200, totalAmount: 2000000, avgAmount: 10000 },
-// ]
-```
-
-### Save NPS Account
-
-```javascript
-const { NPSAccount } = require('./schemas/NPS');
-
-const npsAccount = new NPSAccount({
-  uniqueIdentifier: '8956545791',
-  fiDataId: '6fd55b32-700d-4c8a-a491-42c54862226a',
-  fipId: 'fip@finrepo',
-  fipName: 'Finrepo',
-  maskedPranId: 'XXXXXXXXXXXX2481',
-  holderPranId: '1208160088348123',
-  holderName: 'John Doe',
-  holderPan: 'IJFGF4579B',
-  accountCurrentValue: 461.00,
-  dataFetched: true,
-  lastFetchDateTime: new Date()
-});
-
-await npsAccount.save();
-```
-
-### Save Consent
-
-```javascript
-const { Consent } = require('./schemas/Consent');
-
-const consent = new Consent({
-  uniqueIdentifier: '8956545791',
-  consentHandle: 'consent-handle-123',
-  consentStatus: 'APPROVED',
-  templateName: 'BANK_STATEMENT_PERIODIC',
-  purposeText: 'To generate insights based on your overall finances',
-  aaCustId: '8956545791@finvu',
-  consentStart: new Date(),
-  consentExpiry: new Date('2027-12-31'),
-  fiTypes: ['DEPOSIT', 'MUTUAL_FUNDS', 'EQUITIES']
-});
-
-await consent.save();
-```
-
-## 🔍 Indexes
-
-All schemas include optimized indexes for common query patterns:
-
-- **User**: `uniqueIdentifier` (unique)
-- **Transactions**: `uniqueIdentifier + transactionDateTime`, `accountId + transactionDateTime`
-- **Holdings**: `uniqueIdentifier + isin`
-- **Accounts**: `uniqueIdentifier + accountType`, `fipId`
-
-## 📝 Schema Relationships
-
-```
-User (1) ─────┬───── LinkedAccount (*)
-              │
-              ├───── MutualFundHolding (*)
-              │
-              ├───── EquitiesHolding (*)
-              │
-              ├───── ETFAccount (*)
-              │
-              ├───── TermDepositAccount (*)
-              │
-              ├───── RecurringDepositAccount (*)
-              │
-              ├───── DepositAccount (*)
-              │
-              ├───── NPSAccount (*)
-              │
-              ├───── Consent (*)
-              │
-              └───── Transaction (*)
-```
-
-## 🛠️ Available Methods
-
-### User Model
-
-- `calculateTotalValue()` - Calculate and update total portfolio value
-
-### Subscription Model
-
-- `isActive()` - Check if subscription is currently active
-
-### Consent Model
-
-- `isActive()` - Check if consent is currently valid
-
-### Transaction Model (Static)
-
-- `getByDateRange(uniqueIdentifier, startDate, endDate, assetType)` - Get transactions by date range
-- `getSummary(uniqueIdentifier, startDate, endDate)` - Get transaction summary by asset type
-
-## 🔒 Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/finfactor_aa` |
-
-## 📦 Dependencies
-
-```json
-{
-  "mongoose": "^8.0.0"
-}
-```
-
-## 🤝 Integration with Next.js
-
-For Next.js API routes:
-
-```javascript
-// lib/mongodb.js
-import mongoose from 'mongoose';
-
-const MONGODB_URI = process.env.MONGODB_URI;
-
-let cached = global.mongoose;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
-
-export async function connectToDatabase() {
-  if (cached.conn) {
-    return cached.conn;
-  }
-
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI).then((mongoose) => {
-      return mongoose;
-    });
-  }
-
-  cached.conn = await cached.promise;
-  return cached.conn;
-}
-```
-
-```javascript
-// app/api/user/route.js
-import { connectToDatabase } from '@/lib/mongodb';
-import User from '@/schemas/User';
-
-export async function GET(request) {
-  await connectToDatabase();
-  
-  const users = await User.find({});
-  return Response.json(users);
-}
-```
-
+- All schemas use Mongoose for MongoDB
+- Timestamps are automatically managed via `pre('save')` hooks
+- Complex nested structures use `Schema.Types.Mixed` for flexibility
+- Indexes are optimized for common query patterns
+- Foreign key relationships are maintained via `uniqueIdentifier` and `fiDataId`

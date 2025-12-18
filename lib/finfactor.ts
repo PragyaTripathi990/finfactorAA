@@ -1,5 +1,5 @@
 // API Service for Finfactor Account Aggregator
-const BASE_URL = 'https://dhanaprayoga.fiu.finfactor.in';
+const BASE_URL = process.env.FINFACTOR_BASE_URL || 'https://dhanaprayoga.fiu.finfactor.in';
 
 interface AuthResponse {
   success: boolean;
@@ -28,8 +28,8 @@ export async function authenticate(): Promise<string> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        userId: 'pfm@dhanaprayoga',
-        password: '7777',
+        userId: process.env.FINFACTOR_USER_ID || 'pfm@dhanaprayoga',
+        password: process.env.FINFACTOR_PASSWORD || '7777',
       }),
     });
 

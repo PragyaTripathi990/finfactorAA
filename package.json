@@ -6,13 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed:supabase": "npx tsx scripts/seed-supabase.ts",
+    "seed:from-apis": "npx tsx scripts/seed-from-apis.ts",
+    "check:data-quality": "npx tsx scripts/check-data-quality.ts",
+    "check:api-fields": "npx tsx scripts/check-api-fields.ts"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.87.3",
+    "framer-motion": "^11.18.2",
     "next": "^16.0.10",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "framer-motion": "^11.18.2",
     "react-hot-toast": "^2.4.1"
   },
   "devDependencies": {
@@ -22,7 +28,7 @@
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.40",
     "tailwindcss": "^3.4.7",
+    "tsx": "^4.21.0",
     "typescript": "^5.5.4"
   }
 }
-

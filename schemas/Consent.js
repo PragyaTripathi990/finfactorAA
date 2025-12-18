@@ -2,9 +2,144 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 /**
- * Consent Schema
- * Stores consent data from various consent APIs
+ * Account Consent Schema
+ * Stores data from /pfm/api/v2/account-consents-latest
+ * Latest consent information per account
  */
+const AccountConsentSchema = new Schema({
+  uniqueIdentifier: {
+    type: String,
+    required: true,
+    index: true
+  },
+  accountId: {
+    type: String,
+    required: true,
+    index: true
+  },
+  
+  // Consent Details
+  consentId: { type: String },
+  consentHandle: { type: String },
+  consentStatus: {
+    type: String,
+    enum: ['PENDING', 'ACTIVE', 'PAUSED', 'REVOKED', 'EXPIRED', 'READY'],
+    default: 'PENDING'
+  },
+  
+  // FIP Info
+  fipId: { type: String },
+  
+  // FI Types covered
+  fiTypes: [{ type: String }],
+  
+  // Consent Period
+  consentStart: { type: Date },
+  consentExpiry: { type: Date },
+  
+  // Fetch Configuration
+  fetchType: { type: String },  // PERIODIC, ONETIME
+  frequencyUnit: { type: String },  // HOUR, DAY, WEEK, MONTH, YEAR
+  frequencyValue: { type: Number },
+  
+  // Data Retention
+  dataLifeUnit: { type: String },
+  dataLifeValue: { type: Number },
+  
+  // Purpose
+  purposeCode: { type: String },
+  purposeText: { type: String },
+  
+  // Metadata
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Compound unique index
+AccountConsentSchema.index({ uniqueIdentifier: 1, accountId: 1, consentId: 1 }, { unique: true });
+
+/**
+ * Consent Request Schema
+ * Stores data from /pfm/api/v1/submit-consent-request and /pfm/api/v2/submit-consent-request-plus
+ */
+const ConsentRequestSchema = new Schema({
+  uniqueIdentifier: {
+    type: String,
+    required: true,
+    index: true
+  },
+  
+  // Request Info
+  aaCustId: { type: String },  // e.g., "8956545791@finvu"
+  templateName: { type: String },  // e.g., "BANK_STATEMENT_PERIODIC"
+  userSessionId: { type: String },
+  redirectUrl: { type: String },
+  
+  // Response
+  consentUrl: { type: String },  // URL to redirect user for consent approval
+  
+  // Status
+  status: { type: String, default: 'INITIATED' },
+  
+  // Metadata
+  createdAt: { type: Date, default: Date.now },
+  completedAt: { type: Date }
+});
+
+/**
+ * FI Request Schema
+ * Stores data from /pfm/api/v2/firequest-user and /pfm/api/v2/firequest-account
+ */
+const FIRequestSchema = new Schema({
+  uniqueIdentifier: {
+    type: String,
+    required: true,
+    index: true
+  },
+  accountId: { type: String, index: true },  // Optional, for account-level requests
+  
+  // Request Details
+  requestId: { type: String },
+  requestType: { type: String },  // USER, ACCOUNT
+  
+  // Status
+  status: { type: String },
+  
+  // Request/Response Data
+  requestData: { type: Schema.Types.Mixed },
+  responseData: { type: Schema.Types.Mixed },
+  
+  // Timestamps
+  requestedAt: { type: Date },
+  completedAt: { type: Date },
+  createdAt: { type: Date, default: Date.now }
+});
+
+/**
+ * Account Delink History Schema
+ * Stores data from /pfm/api/v2/user-account-delink
+ */
+const AccountDelinkHistorySchema = new Schema({
+  uniqueIdentifier: {
+    type: String,
+    required: true,
+    index: true
+  },
+  accountId: {
+    type: String,
+    required: true,
+    index: true
+  },
+  
+  // Status
+  success: { type: Boolean, default: false },
+  message: { type: String },
+  
+  // Timestamps
+  delinkedAt: { type: Date, default: Date.now }
+});
+
+// Legacy Consent Schema (kept for backward compatibility)
 const ConsentSchema = new Schema({
   uniqueIdentifier: {
     type: String,
@@ -83,50 +218,16 @@ ConsentSchema.methods.isActive = function() {
          this.consentExpiry > now;
 };
 
-/**
- * Account Consent Latest Schema
- * Stores data from /pfm/api/v2/account-consents-latest
- */
-const AccountConsentLatestSchema = new Schema({
-  uniqueIdentifier: {
-    type: String,
-    required: true,
-    index: true
-  },
-  accountId: {
-    type: String,
-    required: true,
-    index: true
-  },
-  
-  // Latest Consent Details
-  latestConsentPurposeText: { type: String },
-  latestConsentExpiryTime: { type: Date },
-  consentPurposeVersion: { type: String },
-  consentStatus: { type: String },
-  
-  // Consent History
-  consentHistory: [{
-    consentId: { type: String },
-    purposeText: { type: String },
-    status: { type: String },
-    createdAt: { type: Date },
-    expiryTime: { type: Date }
-  }],
-  
-  // Metadata
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-// Compound unique index
-AccountConsentLatestSchema.index({ uniqueIdentifier: 1, accountId: 1 }, { unique: true });
-
+const AccountConsent = mongoose.model('AccountConsent', AccountConsentSchema);
+const ConsentRequest = mongoose.model('ConsentRequest', ConsentRequestSchema);
+const FIRequest = mongoose.model('FIRequest', FIRequestSchema);
+const AccountDelinkHistory = mongoose.model('AccountDelinkHistory', AccountDelinkHistorySchema);
 const Consent = mongoose.model('Consent', ConsentSchema);
-const AccountConsentLatest = mongoose.model('AccountConsentLatest', AccountConsentLatestSchema);
 
 module.exports = {
-  Consent,
-  AccountConsentLatest
+  AccountConsent,
+  ConsentRequest,
+  FIRequest,
+  AccountDelinkHistory,
+  Consent  // Legacy
 };
-

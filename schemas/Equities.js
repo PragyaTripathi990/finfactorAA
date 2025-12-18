@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 /**
  * Broker Holding Schema (embedded)
+ * Used in EquitiesHolding brokers array
  */
 const BrokerHoldingSchema = new Schema({
   brokerName: { type: String },
@@ -23,7 +24,7 @@ const BrokerHoldingSchema = new Schema({
 }, { _id: false });
 
 /**
- * Equities Holding Schema
+ * Equities Holding Schema (Aggregated by ISIN)
  * Stores data from /pfm/api/v2/equities/user-linked-accounts/holding-broker
  */
 const EquitiesHoldingSchema = new Schema({
@@ -51,7 +52,7 @@ const EquitiesHoldingSchema = new Schema({
   currentValue: { type: Number },
   portfolioWeightagePercent: { type: Number },
   
-  // Performance
+  // Previous Day Details
   prevDetails: {
     percentageChange: { type: Number },
     priceChange: { type: Number },
@@ -70,14 +71,14 @@ const EquitiesHoldingSchema = new Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-// Compound index
+// Compound unique index
 EquitiesHoldingSchema.index({ uniqueIdentifier: 1, isin: 1 }, { unique: true });
 
 /**
- * Demat Account Schema
+ * Equities Demat Account Schema
  * Stores data from /pfm/api/v2/equities/user-linked-accounts/demat-holding
  */
-const DematAccountSchema = new Schema({
+const EquitiesDematAccountSchema = new Schema({
   uniqueIdentifier: {
     type: String,
     required: true,
@@ -86,7 +87,7 @@ const DematAccountSchema = new Schema({
   dematId: {
     type: String,
     required: true,
-    unique: true
+    index: true
   },
   fiDataId: { type: String },
   fipId: { type: String },
@@ -97,13 +98,13 @@ const DematAccountSchema = new Schema({
   brokerName: { type: String },
   brokerCode: { type: String },
   
-  // Values
-  currentValue: { type: Number },
+  // Aggregated Values
   units: { type: Number },
   lastTradedPrice: { type: Number },
   avgTradedPrice: { type: Number },
+  currentValue: { type: Number },
   
-  // Performance
+  // Previous Day Details
   prevDetails: {
     percentageChange: { type: Number },
     priceChange: { type: Number },
@@ -113,24 +114,17 @@ const DematAccountSchema = new Schema({
     currentValue: { type: Number }
   },
   
-  // Holdings in this Demat
-  holdings: [{
-    issuerName: { type: String },
-    isin: { type: String },
-    isinDescription: { type: String },
-    units: { type: Number },
-    lastTradedPrice: { type: Number },
-    avgTradedPrice: { type: Number },
-    currentValue: { type: Number },
-    portfolioWeightagePercent: { type: Number },
-    lastFetchTime: { type: Date }
-  }],
+  // Holdings in this Demat (complex nested structure)
+  holdings: { type: Schema.Types.Mixed },
   
   // Metadata
   lastFetchTime: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
+
+// Compound unique index
+EquitiesDematAccountSchema.index({ uniqueIdentifier: 1, dematId: 1 }, { unique: true });
 
 /**
  * Equities Transaction Schema
@@ -152,40 +146,29 @@ const EquitiesTransactionSchema = new Schema({
   
   // Stock Details
   isin: { type: String, index: true },
-  issuerName: { type: String },
-  symbol: { type: String },
+  isinDescription: { type: String },
   
   // Transaction Details
   transactionDateTime: { type: Date, index: true },
+  units: { type: Number },
   type: { type: String }, // BUY, SELL
   narration: { type: String },
-  units: { type: Number },
-  price: { type: Number },
-  amount: { type: Number },
-  
-  // Charges
-  brokerage: { type: Number, default: 0 },
-  stt: { type: Number, default: 0 },
-  exchangeCharges: { type: Number, default: 0 },
-  gst: { type: Number, default: 0 },
-  stampDuty: { type: Number, default: 0 },
-  totalCharges: { type: Number, default: 0 },
+  nav: { type: Number },
   
   // Metadata
   createdAt: { type: Date, default: Date.now }
 });
 
-// Compound index
+// Compound indexes
 EquitiesTransactionSchema.index({ uniqueIdentifier: 1, transactionDateTime: -1 });
 EquitiesTransactionSchema.index({ isin: 1, transactionDateTime: -1 });
 
 const EquitiesHolding = mongoose.model('EquitiesHolding', EquitiesHoldingSchema);
-const DematAccount = mongoose.model('DematAccount', DematAccountSchema);
+const EquitiesDematAccount = mongoose.model('EquitiesDematAccount', EquitiesDematAccountSchema);
 const EquitiesTransaction = mongoose.model('EquitiesTransaction', EquitiesTransactionSchema);
 
 module.exports = {
   EquitiesHolding,
-  DematAccount,
+  EquitiesDematAccount,
   EquitiesTransaction
 };
-
