@@ -434,3 +434,402 @@ export async function getLatestSnapshot(uniqueIdentifier: string) {
   return snapshot;
 }
 
+// =====================================================
+// BROKER OPERATIONS
+// =====================================================
+
+/**
+ * Upsert brokers from API response (batch insert)
+ */
+export async function upsertBrokers(brokersData: any[]) {
+  if (!brokersData || !Array.isArray(brokersData)) return { saved: 0 };
+
+  // Map to database format
+  const records = brokersData.map(broker => ({
+    broker_id: String(broker.brokerId || broker.id || broker.brokerName),
+    broker_name: broker.brokerName || broker.name || 'Unknown',
+    code: broker.code || null,
+    enable: broker.enable || 'true',
+    entity_icon_uri: broker.entityIconUri || broker.logo || null,
+    entity_logo_uri: broker.entityLogoUri || broker.logo || null,
+    updated_at: new Date().toISOString(),
+  }));
+
+  try {
+    // Clear and insert fresh
+    await supabaseAdmin.from('brokers').delete().neq('broker_id', '');
+    
+    // Insert in batches of 100 to avoid timeout
+    const batchSize = 100;
+    let saved = 0;
+    
+    for (let i = 0; i < records.length; i += batchSize) {
+      const batch = records.slice(i, i + batchSize);
+      const { data, error } = await supabaseAdmin
+        .from('brokers')
+        .insert(batch)
+        .select();
+      
+      if (!error && data) {
+        saved += data.length;
+      } else if (error) {
+        console.error('Batch insert error:', error.message);
+      }
+    }
+    
+    console.log(`💾 Saved ${saved} brokers to database`);
+    return { saved };
+  } catch (e: any) {
+    console.error('Error upserting brokers:', e.message);
+    return { saved: 0 };
+  }
+}
+
+// =====================================================
+// MUTUAL FUND HOLDINGS OPERATIONS
+// =====================================================
+
+/**
+ * Upsert MF holdings from API response (batch insert)
+ */
+export async function upsertMFHoldings(uniqueIdentifier: string, holdingsData: any) {
+  const user = await getOrCreateUser(uniqueIdentifier);
+  if (!user) return { saved: 0 };
+
+  const holdings = holdingsData?.holdings || holdingsData?.fipData || [];
+  
+  // Handle nested structure from API
+  const allHoldings: any[] = [];
+  
+  if (Array.isArray(holdings)) {
+    for (const item of holdings) {
+      if (item.holdings && Array.isArray(item.holdings)) {
+        for (const h of item.holdings) {
+          allHoldings.push({ ...h, fipName: item.fipName, fipId: item.fipId });
+        }
+      } else {
+        allHoldings.push(item);
+      }
+    }
+  }
+
+  if (allHoldings.length === 0) return { saved: 0 };
+
+  // Batch insert all at once
+  const records = allHoldings.map(holding => ({
+    user_id: user.id,
+    folio_number: holding.folioNumber || holding.folio || null,
+    scheme_name: holding.schemeName || holding.name || 'Unknown',
+    scheme_code: holding.schemeCode || holding.isin || null,
+    isin: holding.isin || null,
+    amc_name: holding.amcName || holding.amc || null,
+    fund_type: holding.fundType || holding.category || null,
+    units: parseFloat(holding.units) || 0,
+    nav: parseFloat(holding.nav) || 0,
+    current_value: parseFloat(holding.currentValue || holding.value) || 0,
+    invested_value: parseFloat(holding.investedValue || holding.costValue) || 0,
+    returns_absolute: parseFloat(holding.returnsAbsolute || holding.absoluteReturn) || 0,
+    returns_percent: parseFloat(holding.returnsPercent || holding.percentReturn) || 0,
+    fip_name: holding.fipName || null,
+    last_fetch_time: new Date().toISOString(),
+  }));
+
+  try {
+    // Clear old data for this user first, then insert fresh
+    await supabaseAdmin.from('fi_mf_holdings').delete().eq('user_id', user.id);
+    
+    const { data, error } = await supabaseAdmin
+      .from('fi_mf_holdings')
+      .insert(records)
+      .select();
+
+    if (error) {
+      console.error('Error inserting MF holdings:', error.message);
+      return { saved: 0 };
+    }
+    
+    console.log(`💾 Saved ${data?.length || 0} MF holdings to database`);
+    return { saved: data?.length || 0 };
+  } catch (e: any) {
+    console.error('Error upserting MF holdings:', e.message);
+    return { saved: 0 };
+  }
+}
+
+// =====================================================
+// EQUITY HOLDINGS OPERATIONS
+// =====================================================
+
+/**
+ * Upsert equity holdings from API response (batch insert)
+ */
+export async function upsertEquityHoldings(uniqueIdentifier: string, holdingsData: any) {
+  const user = await getOrCreateUser(uniqueIdentifier);
+  if (!user) return { saved: 0 };
+
+  const holdings = holdingsData?.holdings || holdingsData?.fipData || [];
+  
+  // Handle nested structure
+  const allHoldings: any[] = [];
+  
+  if (Array.isArray(holdings)) {
+    for (const item of holdings) {
+      if (item.holdings && Array.isArray(item.holdings)) {
+        for (const h of item.holdings) {
+          allHoldings.push({ ...h, fipName: item.fipName, brokerId: item.brokerId });
+        }
+      } else if (item.dematAccounts && Array.isArray(item.dematAccounts)) {
+        for (const demat of item.dematAccounts) {
+          if (demat.holdings && Array.isArray(demat.holdings)) {
+            for (const h of demat.holdings) {
+              allHoldings.push({ ...h, dematId: demat.dematId, fipName: item.fipName });
+            }
+          }
+        }
+      } else {
+        allHoldings.push(item);
+      }
+    }
+  }
+
+  if (allHoldings.length === 0) return { saved: 0 };
+
+  // Batch insert
+  const records = allHoldings.map(holding => ({
+    user_id: user.id,
+    symbol: holding.symbol || holding.stockSymbol || null,
+    isin: holding.isin || null,
+    company_name: holding.companyName || holding.name || 'Unknown',
+    quantity: parseInt(holding.quantity || holding.units) || 0,
+    average_price: parseFloat(holding.averagePrice || holding.avgPrice) || 0,
+    current_price: parseFloat(holding.currentPrice || holding.ltp) || 0,
+    current_value: parseFloat(holding.currentValue || holding.value) || 0,
+    invested_value: parseFloat(holding.investedValue || holding.costValue) || 0,
+    day_change: parseFloat(holding.dayChange) || 0,
+    day_change_percent: parseFloat(holding.dayChangePercent) || 0,
+    total_returns: parseFloat(holding.totalReturns || holding.pnl) || 0,
+    returns_percent: parseFloat(holding.returnsPercent) || 0,
+    broker_name: holding.brokerName || holding.brokerId || null,
+    demat_id: holding.dematId || null,
+    fip_name: holding.fipName || null,
+    last_fetch_time: new Date().toISOString(),
+  }));
+
+  try {
+    await supabaseAdmin.from('fi_equity_holdings').delete().eq('user_id', user.id);
+    
+    const { data, error } = await supabaseAdmin
+      .from('fi_equity_holdings')
+      .insert(records)
+      .select();
+
+    if (error) {
+      console.error('Error inserting equity holdings:', error.message);
+      return { saved: 0 };
+    }
+    
+    console.log(`💾 Saved ${data?.length || 0} equity holdings to database`);
+    return { saved: data?.length || 0 };
+  } catch (e: any) {
+    console.error('Error upserting equity holdings:', e.message);
+    return { saved: 0 };
+  }
+}
+
+// =====================================================
+// ETF HOLDINGS OPERATIONS
+// =====================================================
+
+/**
+ * Upsert ETF holdings from API response (batch insert)
+ */
+export async function upsertETFHoldings(uniqueIdentifier: string, holdingsData: any) {
+  const user = await getOrCreateUser(uniqueIdentifier);
+  if (!user) return { saved: 0 };
+
+  const holdings = holdingsData?.holdings || holdingsData?.fipData || [];
+  
+  // Handle nested structure
+  const allHoldings: any[] = [];
+  
+  if (Array.isArray(holdings)) {
+    for (const item of holdings) {
+      if (item.holdings && Array.isArray(item.holdings)) {
+        for (const h of item.holdings) {
+          allHoldings.push({ ...h, fipName: item.fipName });
+        }
+      } else {
+        allHoldings.push(item);
+      }
+    }
+  }
+
+  if (allHoldings.length === 0) return { saved: 0 };
+
+  const records = allHoldings.map(holding => ({
+    user_id: user.id,
+    symbol: holding.symbol || holding.etfSymbol || null,
+    isin: holding.isin || null,
+    etf_name: holding.etfName || holding.name || 'Unknown',
+    quantity: parseInt(holding.quantity || holding.units) || 0,
+    average_price: parseFloat(holding.averagePrice || holding.avgPrice) || 0,
+    current_price: parseFloat(holding.currentPrice || holding.ltp) || 0,
+    current_value: parseFloat(holding.currentValue || holding.value) || 0,
+    invested_value: parseFloat(holding.investedValue || holding.costValue) || 0,
+    returns_absolute: parseFloat(holding.returnsAbsolute) || 0,
+    returns_percent: parseFloat(holding.returnsPercent) || 0,
+    fip_name: holding.fipName || null,
+    last_fetch_time: new Date().toISOString(),
+  }));
+
+  try {
+    await supabaseAdmin.from('fi_etf_holdings').delete().eq('user_id', user.id);
+    
+    const { data, error } = await supabaseAdmin
+      .from('fi_etf_holdings')
+      .insert(records)
+      .select();
+
+    if (error) {
+      console.error('Error inserting ETF holdings:', error.message);
+      return { saved: 0 };
+    }
+    
+    console.log(`💾 Saved ${data?.length || 0} ETF holdings to database`);
+    return { saved: data?.length || 0 };
+  } catch (e: any) {
+    console.error('Error upserting ETF holdings:', e.message);
+    return { saved: 0 };
+  }
+}
+
+// =====================================================
+// NPS HOLDINGS OPERATIONS
+// =====================================================
+
+/**
+ * Upsert NPS holdings from API response (batch insert)
+ */
+export async function upsertNPSHoldings(uniqueIdentifier: string, holdingsData: any) {
+  const user = await getOrCreateUser(uniqueIdentifier);
+  if (!user) return { saved: 0 };
+
+  const holdings = holdingsData?.holdings || holdingsData?.fipData || holdingsData?.accounts || [];
+  
+  // Handle nested structure
+  const allHoldings: any[] = [];
+  
+  if (Array.isArray(holdings)) {
+    for (const item of holdings) {
+      if (item.holdings && Array.isArray(item.holdings)) {
+        for (const h of item.holdings) {
+          allHoldings.push({ ...h, fipName: item.fipName });
+        }
+      } else if (item.linkedAccounts && Array.isArray(item.linkedAccounts)) {
+        for (const acc of item.linkedAccounts) {
+          allHoldings.push({ ...acc, fipName: item.fipName });
+        }
+      } else {
+        allHoldings.push(item);
+      }
+    }
+  }
+
+  if (allHoldings.length === 0) return { saved: 0 };
+
+  const records = allHoldings.map(holding => ({
+    user_id: user.id,
+    pran: holding.pran || holding.pranNumber || null,
+    scheme_name: holding.schemeName || holding.name || 'Unknown',
+    scheme_type: holding.schemeType || holding.tier || null,
+    pfm_name: holding.pfmName || holding.pensionFundManager || null,
+    units: parseFloat(holding.units) || 0,
+    nav: parseFloat(holding.nav) || 0,
+    current_value: parseFloat(holding.currentValue || holding.value) || 0,
+    total_contribution: parseFloat(holding.totalContribution) || 0,
+    tier1_value: parseFloat(holding.tier1Value) || 0,
+    tier2_value: parseFloat(holding.tier2Value) || 0,
+    fip_name: holding.fipName || null,
+    last_fetch_time: new Date().toISOString(),
+  }));
+
+  try {
+    await supabaseAdmin.from('fi_nps_holdings').delete().eq('user_id', user.id);
+    
+    const { data, error } = await supabaseAdmin
+      .from('fi_nps_holdings')
+      .insert(records)
+      .select();
+
+    if (error) {
+      console.error('Error inserting NPS holdings:', error.message);
+      return { saved: 0 };
+    }
+    
+    console.log(`💾 Saved ${data?.length || 0} NPS holdings to database`);
+    return { saved: data?.length || 0 };
+  } catch (e: any) {
+    console.error('Error upserting NPS holdings:', e.message);
+    return { saved: 0 };
+  }
+}
+
+// =====================================================
+// HELPER: Get or Create User
+// =====================================================
+
+/**
+ * Get user or create if not exists
+ */
+async function getOrCreateUser(uniqueIdentifier: string) {
+  let user = await getUserByIdentifier(uniqueIdentifier);
+  
+  if (!user) {
+    try {
+      user = await upsertUser(uniqueIdentifier, {
+        phone: uniqueIdentifier,
+        subscriptionStatus: 'ACTIVE',
+      });
+    } catch (e) {
+      console.error('Error creating user:', e);
+      return null;
+    }
+  }
+  
+  return user;
+}
+
+// =====================================================
+// BULK FIP UPSERT
+// =====================================================
+
+/**
+ * Upsert all FIPs from API response
+ */
+export async function upsertAllFips(fipsData: any[]) {
+  if (!fipsData || !Array.isArray(fipsData)) return { saved: 0 };
+
+  let saved = 0;
+  for (const fip of fipsData) {
+    try {
+      await upsertFip({
+        fipId: fip.fipId || fip.id,
+        fipName: fip.fipName || fip.name,
+        code: fip.code,
+        enable: fip.enable,
+        fiTypes: fip.fiTypes,
+        entityIconUri: fip.entityIconUri,
+        entityLogoUri: fip.entityLogoUri,
+        entityLogoWithNameUri: fip.entityLogoWithNameUri,
+        otpLength: fip.otpLength,
+      });
+      saved++;
+    } catch (e) {
+      console.error('Error upserting FIP:', e);
+    }
+  }
+  
+  console.log(`💾 Saved ${saved} FIPs to database`);
+  return { saved };
+}
+

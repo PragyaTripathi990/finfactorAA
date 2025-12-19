@@ -1,6 +1,14 @@
 'use server';
 
 import { makeAuthenticatedRequest } from '@/lib/finfactor';
+import { 
+  upsertBrokers, 
+  upsertMFHoldings, 
+  upsertEquityHoldings, 
+  upsertETFHoldings, 
+  upsertNPSHoldings,
+  upsertAllFips,
+} from '@/lib/supabase-server';
 
 /**
  * Get user details - returns the full data object
@@ -190,7 +198,15 @@ export async function getFIPs(): Promise<any> {
       '/pfm/api/v2/fips',
       {}
     );
-    return response.data || response;
+    const data = response.data || response;
+    
+    // 💾 Persist to database
+    if (Array.isArray(data)) {
+      const result = await upsertAllFips(data);
+      console.log(`💾 FIPs: Saved ${result.saved} to database`);
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching FIPs:', error);
     return null;
@@ -206,7 +222,15 @@ export async function getBrokers(): Promise<any> {
       '/pfm/api/v2/brokers',
       {}
     );
-    return response.data || response;
+    const data = response.data || response;
+    
+    // 💾 Persist to database
+    if (Array.isArray(data)) {
+      const result = await upsertBrokers(data);
+      console.log(`💾 Brokers: Saved ${result.saved} to database`);
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching brokers:', error);
     return null;
@@ -218,13 +242,22 @@ export async function getBrokers(): Promise<any> {
  */
 export async function getNPSLinkedAccounts(): Promise<any> {
   try {
+    const uniqueIdentifier = '8956545791';
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/nps/user-linked-accounts',
       {
-        uniqueIdentifier: '8956545791',
+        uniqueIdentifier,
       }
     );
-    return response.data || response;
+    const data = response.data || response;
+    
+    // 💾 Persist to database
+    if (data) {
+      const result = await upsertNPSHoldings(uniqueIdentifier, data);
+      console.log(`💾 NPS Holdings: Saved ${result.saved} to database`);
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching NPS linked accounts:', error);
     return null;
@@ -390,15 +423,24 @@ export async function getRecurringDepositAccountStatement(): Promise<any> {
  */
 export async function getMFUserLinkedAccounts(): Promise<any> {
   try {
+    const uniqueIdentifier = '8956545791';
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/mutual-fund/user-linked-accounts',
       {
-        uniqueIdentifier: '8956545791',
+        uniqueIdentifier,
         filterZeroValueAccounts: 'false',
         filterZeroValueHoldings: 'false',
       }
     );
-    return response.data || response;
+    const data = response.data || response;
+    
+    // 💾 Persist to database
+    if (data) {
+      const result = await upsertMFHoldings(uniqueIdentifier, data);
+      console.log(`💾 MF Linked Accounts: Saved ${result.saved} to database`);
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching MF user linked accounts:', error);
     return null;
@@ -410,13 +452,22 @@ export async function getMFUserLinkedAccounts(): Promise<any> {
  */
 export async function getMFHoldingFolio(): Promise<any> {
   try {
+    const uniqueIdentifier = '8956545791';
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/mutual-fund/user-linked-accounts/holding-folio',
       {
-        uniqueIdentifier: '8956545791',
+        uniqueIdentifier,
       }
     );
-    return response.data || response;
+    const data = response.data || response;
+    
+    // 💾 Persist to database
+    if (data) {
+      const result = await upsertMFHoldings(uniqueIdentifier, data);
+      console.log(`💾 MF Holdings: Saved ${result.saved} to database`);
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching MF holding folio:', error);
     return null;
@@ -545,15 +596,24 @@ export async function getMFCConsentApprove(
  */
 export async function getETFUserLinkedAccounts(): Promise<any> {
   try {
+    const uniqueIdentifier = '9823972748';
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/etf/user-linked-accounts',
       {
-        uniqueIdentifier: '9823972748',
+        uniqueIdentifier,
         filterZeroValueAccounts: 'false',
         filterZeroValueHoldings: 'false',
       }
     );
-    return response.data || response;
+    const data = response.data || response;
+    
+    // 💾 Persist to database
+    if (data) {
+      const result = await upsertETFHoldings(uniqueIdentifier, data);
+      console.log(`💾 ETF Holdings: Saved ${result.saved} to database`);
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching ETF user linked accounts:', error);
     return null;
@@ -583,15 +643,24 @@ export async function getETFInsights(): Promise<any> {
  */
 export async function getEquitiesUserLinkedAccounts(): Promise<any> {
   try {
+    const uniqueIdentifier = '9823972748';
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/equities/user-linked-accounts',
       {
-        uniqueIdentifier: '9823972748',
+        uniqueIdentifier,
         filterZeroValueAccounts: 'false',
         filterZeroValueHoldings: 'false',
       }
     );
-    return response.data || response;
+    const data = response.data || response;
+    
+    // 💾 Persist to database
+    if (data) {
+      const result = await upsertEquityHoldings(uniqueIdentifier, data);
+      console.log(`💾 Equity Holdings: Saved ${result.saved} to database`);
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching equities user linked accounts:', error);
     return null;
@@ -603,15 +672,24 @@ export async function getEquitiesUserLinkedAccounts(): Promise<any> {
  */
 export async function getEquitiesHoldingBroker(): Promise<any> {
   try {
+    const uniqueIdentifier = '9823972748';
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/equities/user-linked-accounts/holding-broker',
       {
-        uniqueIdentifier: '9823972748',
+        uniqueIdentifier,
         filterZeroValueAccounts: 'false',
         filterZeroValueHoldings: 'false',
       }
     );
-    return response.data || response;
+    const data = response.data || response;
+    
+    // 💾 Persist to database
+    if (data) {
+      const result = await upsertEquityHoldings(uniqueIdentifier, data);
+      console.log(`💾 Equity Holding Broker: Saved ${result.saved} to database`);
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching equities holding broker:', error);
     return null;
