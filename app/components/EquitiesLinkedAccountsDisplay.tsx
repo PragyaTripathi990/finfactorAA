@@ -265,7 +265,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
     return (
       <div className="space-y-4">
         {/* Account Information */}
-        {accountFields.length > 0 && (
+        {accountFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>🏦</span> Account Information
@@ -283,10 +283,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Holding Information */}
-        {holdingFields.length > 0 && (
+        {holdingFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-success mb-2 flex items-center gap-2">
               <span>📊</span> Holding Information
@@ -304,10 +304,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Value & Price Information */}
-        {valueFields.length > 0 && (
+        {valueFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-warning mb-2 flex items-center gap-2">
               <span>💰</span> Value & Price Information
@@ -325,10 +325,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Date & Time Fields */}
-        {dateFields.length > 0 && (
+        {dateFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-secondary mb-2 flex items-center gap-2">
               <span>📅</span> Date & Time Information
@@ -346,10 +346,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Status Fields */}
-        {statusFields.length > 0 && (
+        {statusFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>⚡</span> Status Information
@@ -367,10 +367,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Holder Information */}
-        {holderFields.length > 0 && (
+        {holderFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-secondary mb-2 flex items-center gap-2">
               <span>👤</span> Holder Information
@@ -388,10 +388,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Broker Information */}
-        {brokerFields.length > 0 && (
+        {brokerFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-warning mb-2 flex items-center gap-2">
               <span>🏢</span> Broker Information
@@ -409,10 +409,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* FIP Information */}
-        {fipFields.length > 0 && (
+        {fipFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>🏦</span> FIP Information
@@ -430,10 +430,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Request & Count Information */}
-        {requestFields.length > 0 && (
+        {requestFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>📊</span> Request & Count Information
@@ -451,10 +451,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Consent Information */}
-        {consentFields.length > 0 && (
+        {consentFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>✅</span> Consent Information
@@ -472,7 +472,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* FI Data */}
         {fiDataValue && (
@@ -541,7 +541,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
         )}
 
         {/* Other Fields */}
-        {otherFields.length > 0 && (
+        {otherFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>📋</span> Additional Information
@@ -559,7 +559,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     );
   };

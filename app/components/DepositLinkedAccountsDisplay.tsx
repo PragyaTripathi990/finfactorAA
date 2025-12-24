@@ -461,13 +461,13 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               </span>
             </div>
           </button>
-          {expandedAccounts.has(accountId + '-raw') && (
+          {expandedAccounts.has(accountId + '-raw') ? (
             <div className="mt-2 glass-effect rounded-lg p-4">
               <pre className="text-xs text-dark-text overflow-x-auto">
                 {JSON.stringify(account, null, 2)}
               </pre>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     );
@@ -567,7 +567,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               </div>
             </div>
           </motion.div>
-        )}
+        ) : null}
       </div>
 
       {/* FIP Data */}
@@ -679,13 +679,13 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                                 </h4>
                                 {account.accountName && (
                                   <p className="text-sm text-dark-textSecondary">{account.accountName}</p>
-                                )}
+                                ) : null}
                                 <div className="flex flex-wrap gap-2 mt-2">
                                   {account.accountType && (
                                     <span className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary rounded">
                                       {account.accountType}
                                     </span>
-                                  )}
+                                  ) : null}
                                   {account.fipName && (
                                     <span className="text-xs px-2 py-1 bg-accent-secondary/20 text-accent-secondary rounded">
                                       {account.fipName}
@@ -799,13 +799,13 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
             </span>
           </div>
         </button>
-        {expandedAccounts.has('raw-response') && (
+        {expandedAccounts.has('raw-response') ? (
           <div className="mt-4 glass-effect rounded-lg p-4 max-h-96 overflow-auto">
             <pre className="text-xs text-dark-text whitespace-pre-wrap break-words">
               {JSON.stringify(data, null, 2)}
             </pre>
           </div>
-        )}
+        ) : null}
       </motion.div>
     </div>
   );
