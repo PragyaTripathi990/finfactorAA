@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
 interface AccountStatementDisplayProps {
@@ -31,12 +31,22 @@ export default function AccountStatementDisplay({ data }: AccountStatementDispla
     transactions = data.data;
   } else if (data.transactions && Array.isArray(data.transactions)) {
     transactions = data.transactions;
+  } else if (data.transactionList && Array.isArray(data.transactionList)) {
+    transactions = data.transactionList;
   } else {
     // If it's an object, try to find any array property
     const arrayKeys = Object.keys(data).filter(key => Array.isArray(data[key]));
     if (arrayKeys.length > 0) {
       transactions = data[arrayKeys[0]];
     }
+  }
+  
+  // Debug: Log transaction structure to help identify issues
+  if (transactions.length > 0) {
+    console.log('📊 Transaction Sample:', JSON.stringify(transactions[0], null, 2));
+    console.log('📊 Total Transactions:', transactions.length);
+    console.log('📊 Transaction Types:', transactions.map((t: any) => t.type || 'NO_TYPE'));
+    console.log('📊 Transaction Amounts:', transactions.map((t: any) => t.amount || t.transactionAmount || 'NO_AMOUNT'));
   }
 
   if (transactions.length === 0) {
@@ -73,24 +83,81 @@ export default function AccountStatementDisplay({ data }: AccountStatementDispla
     });
   };
 
+  // Helper function to determine if transaction is credit
+  const isCreditTransaction = (transaction: any): boolean => {
+    // Check multiple possible fields and formats
+    const type = transaction.type || transaction.transactionType || transaction.txnType || transaction.transactionTypeCode || '';
+    const amount = parseFloat(transaction.amount || transaction.transactionAmount || transaction.amountValue || 0);
+    
+    // Check type field (case-insensitive)
+    if (type && String(type).trim() !== '') {
+      const upperType = String(type).toUpperCase().trim();
+      if (upperType === 'CREDIT' || upperType === 'CR' || upperType === 'CREDIT_TRANSACTION' || upperType === 'IN' || upperType === 'CREDIT_TRANSFER') {
+        return true;
+      }
+      if (upperType === 'DEBIT' || upperType === 'DR' || upperType === 'DEBIT_TRANSACTION' || upperType === 'OUT' || upperType === 'DEBIT_TRANSFER') {
+        return false;
+      }
+    }
+    
+    // For RD, check if it's a deposit (credit) or withdrawal (debit)
+    // Check narration or description for keywords
+    const narration = String(transaction.narration || transaction.description || transaction.remarks || '').toUpperCase();
+    if (narration.includes('DEPOSIT') || narration.includes('CREDIT') || narration.includes('INTEREST') || narration.includes('MATURITY')) {
+      return true;
+    }
+    if (narration.includes('WITHDRAWAL') || narration.includes('DEBIT') || narration.includes('TDS') || narration.includes('DEDUCTION')) {
+      return false;
+    }
+    
+    // If no type field, check amount sign
+    // For RD: positive amount usually means deposit (credit), negative means withdrawal (debit)
+    // But also check if amount is negative - negative amounts are typically debits
+    if (amount < 0) return false;
+    if (amount > 0) return true;
+    
+    // Default: if amount is 0 or undefined, check other indicators
+    // If there's a balance field, check if it increased or decreased
+    if (transaction.balance !== undefined && transaction.previousBalance !== undefined) {
+      const balance = parseFloat(transaction.balance) || 0;
+      const prevBalance = parseFloat(transaction.previousBalance) || 0;
+      return balance > prevBalance;
+    }
+    
+    // Default: assume credit if amount is positive or zero
+    return amount >= 0;
+  };
+
+  // Helper function to get transaction type for filtering
+  const getTransactionType = (transaction: any): 'CREDIT' | 'DEBIT' => {
+    return isCreditTransaction(transaction) ? 'CREDIT' : 'DEBIT';
+  };
+
   // Get unique categories for filter
   const categories = Array.from(new Set(transactions.map((t: any) => t.category))).sort();
 
   // Filter transactions
   const filteredTransactions = transactions.filter((t: any) => {
-    const typeMatch = filterType === 'ALL' || t.type === filterType;
+    const transactionType = getTransactionType(t);
+    const typeMatch = filterType === 'ALL' || transactionType === filterType;
     const categoryMatch = filterCategory === 'ALL' || t.category === filterCategory;
     return typeMatch && categoryMatch;
   });
 
   // Calculate totals
   const totalCredits = filteredTransactions
-    .filter((t: any) => t.type === 'CREDIT')
-    .reduce((sum: number, t: any) => sum + (parseFloat(t.amount) || 0), 0);
+    .filter((t: any) => isCreditTransaction(t))
+    .reduce((sum: number, t: any) => {
+      const amount = parseFloat(t.amount || t.transactionAmount || 0);
+      return sum + Math.abs(amount);
+    }, 0);
   
   const totalDebits = filteredTransactions
-    .filter((t: any) => t.type === 'DEBIT')
-    .reduce((sum: number, t: any) => sum + (parseFloat(t.amount) || 0), 0);
+    .filter((t: any) => !isCreditTransaction(t))
+    .reduce((sum: number, t: any) => {
+      const amount = parseFloat(t.amount || t.transactionAmount || 0);
+      return sum + Math.abs(amount);
+    }, 0);
 
   const netAmount = totalCredits - totalDebits;
 
@@ -258,8 +325,9 @@ export default function AccountStatementDisplay({ data }: AccountStatementDispla
       <div className="space-y-3">
         {filteredTransactions.map((transaction: any, index: number) => {
           const isExpanded = expandedTransactions.has(index);
-          const isCredit = transaction.type === 'CREDIT';
-          const amount = parseFloat(transaction.amount) || 0;
+          const isCredit = isCreditTransaction(transaction);
+          const amount = parseFloat(transaction.amount || transaction.transactionAmount || 0);
+          const absAmount = Math.abs(amount);
 
           return (
             <motion.div
@@ -297,7 +365,7 @@ export default function AccountStatementDisplay({ data }: AccountStatementDispla
                             ? 'bg-accent-success text-white'
                             : 'bg-accent-danger text-white'
                         }`}>
-                          {transaction.type}
+                          {transaction.type || (isCredit ? 'CREDIT' : 'DEBIT')}
                         </span>
                       </div>
                       {transaction.subCategory && (
@@ -310,7 +378,7 @@ export default function AccountStatementDisplay({ data }: AccountStatementDispla
                       <div className={`text-3xl font-bold ${
                         isCredit ? 'text-accent-success' : 'text-accent-danger'
                       }`}>
-                        {isCredit ? '+' : '-'}{formatCurrency(amount)}
+                        {isCredit ? '+' : '-'}{formatCurrency(absAmount)}
                       </div>
                     </div>
                   </div>

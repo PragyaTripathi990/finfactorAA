@@ -58,6 +58,15 @@ import UserDetailsDisplay from './components/UserDetailsDisplay';
 import AccountStatementDisplay from './components/AccountStatementDisplay';
 import DepositInsightsDisplay from './components/DepositInsightsDisplay';
 import BrokersDisplay from './components/BrokersDisplay';
+import MFLinkedAccountsDisplay from './components/MFLinkedAccountsDisplay';
+import MFUserDetailsDisplay from './components/MFUserDetailsDisplay';
+import MFHoldingFolioDisplay from './components/MFHoldingFolioDisplay';
+import MFInsightsDisplay from './components/MFInsightsDisplay';
+import MFAnalysisDisplay from './components/MFAnalysisDisplay';
+import MFAccountStatementDisplay from './components/MFAccountStatementDisplay';
+import ETFLinkedAccountsDisplay from './components/ETFLinkedAccountsDisplay';
+import ETFInsightsDisplay from './components/ETFInsightsDisplay';
+import ETFAccountStatementDisplay from './components/ETFAccountStatementDisplay';
 import { camelToTitleCase, formatValue, flattenObject } from '@/lib/formatters';
 
 type TabId = 'portfolio' | 'mutualfunds' | 'termdeposit' | 'rddeposit' | 'mfdetails' | 'etf' | 'equities' | 'deposit' | 'firequest' | 'fips' | 'brokers' | 'nps' | 'consents';
@@ -398,6 +407,24 @@ export default function DashboardPage() {
 
       case 'mfdetails':
         const mfData = data[`mf-${activeSubTab.mfdetails}`];
+        if (activeSubTab.mfdetails === 'linked') {
+          return <MFLinkedAccountsDisplay data={mfData} />;
+        }
+        if (activeSubTab.mfdetails === 'folio') {
+          return <MFHoldingFolioDisplay data={mfData} />;
+        }
+        if (activeSubTab.mfdetails === 'details') {
+          return <MFUserDetailsDisplay data={mfData} />;
+        }
+        if (activeSubTab.mfdetails === 'statement') {
+          return <MFAccountStatementDisplay data={mfData} />;
+        }
+        if (activeSubTab.mfdetails === 'insights') {
+          return <MFInsightsDisplay data={mfData} />;
+        }
+        if (activeSubTab.mfdetails === 'analysis') {
+          return <MFAnalysisDisplay data={mfData} />;
+        }
         return <DataTable data={mfData} maxItems={10} />;
 
       case 'etf':
