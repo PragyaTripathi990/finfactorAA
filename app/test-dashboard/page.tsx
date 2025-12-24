@@ -45,34 +45,45 @@ import {
   delinkAccount,
   initiateConsentPlus,
   submitConsentV1,
-} from './actions';
-import FinancialDataDisplay from './components/FinancialDataDisplay';
-import DataTable from './components/DataTable';
-import Tabs from './components/Tabs';
-import SubTabs from './components/SubTabs';
-import NPSLinkedAccountsDisplay from './components/NPSLinkedAccountsDisplay';
-import MutualFundsDisplay from './components/MutualFundsDisplay';
-import FIPsDisplay from './components/FIPsDisplay';
-import DepositLinkedAccountsDisplay from './components/DepositLinkedAccountsDisplay';
-import UserDetailsDisplay from './components/UserDetailsDisplay';
-import AccountStatementDisplay from './components/AccountStatementDisplay';
-import DepositInsightsDisplay from './components/DepositInsightsDisplay';
-import BrokersDisplay from './components/BrokersDisplay';
-import MFLinkedAccountsDisplay from './components/MFLinkedAccountsDisplay';
-import MFUserDetailsDisplay from './components/MFUserDetailsDisplay';
-import MFHoldingFolioDisplay from './components/MFHoldingFolioDisplay';
-import MFInsightsDisplay from './components/MFInsightsDisplay';
-import MFAnalysisDisplay from './components/MFAnalysisDisplay';
-import MFAccountStatementDisplay from './components/MFAccountStatementDisplay';
-import ETFLinkedAccountsDisplay from './components/ETFLinkedAccountsDisplay';
-import ETFInsightsDisplay from './components/ETFInsightsDisplay';
-import ETFAccountStatementDisplay from './components/ETFAccountStatementDisplay';
+} from '../actions';
+import FinancialDataDisplay from '../components/FinancialDataDisplay';
+import DataTable from '../components/DataTable';
+import Sidebar from '../components/Sidebar';
+import NPSLinkedAccountsDisplay from '../components/NPSLinkedAccountsDisplay';
+import MutualFundsDisplay from '../components/MutualFundsDisplay';
+import FIPsDisplay from '../components/FIPsDisplay';
+import DepositLinkedAccountsDisplay from '../components/DepositLinkedAccountsDisplay';
+import UserDetailsDisplay from '../components/UserDetailsDisplay';
+import AccountStatementDisplay from '../components/AccountStatementDisplay';
+import DepositInsightsDisplay from '../components/DepositInsightsDisplay';
+import BrokersDisplay from '../components/BrokersDisplay';
+import MFLinkedAccountsDisplay from '../components/MFLinkedAccountsDisplay';
+import MFUserDetailsDisplay from '../components/MFUserDetailsDisplay';
+import MFHoldingFolioDisplay from '../components/MFHoldingFolioDisplay';
+import MFInsightsDisplay from '../components/MFInsightsDisplay';
+import MFAnalysisDisplay from '../components/MFAnalysisDisplay';
+import MFAccountStatementDisplay from '../components/MFAccountStatementDisplay';
+import ETFLinkedAccountsDisplay from '../components/ETFLinkedAccountsDisplay';
+import ETFInsightsDisplay from '../components/ETFInsightsDisplay';
+import ETFAccountStatementDisplay from '../components/ETFAccountStatementDisplay';
+import EquitiesLinkedAccountsDisplay from '../components/EquitiesLinkedAccountsDisplay';
+import EquitiesHoldingBrokerDisplay from '../components/EquitiesHoldingBrokerDisplay';
+import EquitiesDematHoldingDisplay from '../components/EquitiesDematHoldingDisplay';
+import EquitiesBrokerHoldingDisplay from '../components/EquitiesBrokerHoldingDisplay';
+import EquitiesUserDetailsDisplay from '../components/EquitiesUserDetailsDisplay';
+import EquitiesAccountStatementDisplay from '../components/EquitiesAccountStatementDisplay';
+import EquitiesETFsDematHoldingDisplay from '../components/EquitiesETFsDematHoldingDisplay';
+import RDLinkedAccountsDisplay from '../components/RDLinkedAccountsDisplay';
+import TDLinkedAccountsDisplay from '../components/TDLinkedAccountsDisplay';
+import FIRequestDisplay from '../components/FIRequestDisplay';
+import AccountConsentsDisplay from '../components/AccountConsentsDisplay';
+import ConsentResponseDisplay from '../components/ConsentResponseDisplay';
 import { camelToTitleCase, formatValue, flattenObject } from '@/lib/formatters';
 
 type TabId = 'portfolio' | 'mutualfunds' | 'termdeposit' | 'rddeposit' | 'mfdetails' | 'etf' | 'equities' | 'deposit' | 'firequest' | 'fips' | 'brokers' | 'nps' | 'consents';
 type SubTabId = string;
 
-export default function DashboardPage() {
+export default function TestDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabId>('portfolio');
   const [activeSubTab, setActiveSubTab] = useState<Record<TabId, SubTabId>>({
     portfolio: '',
@@ -229,9 +240,6 @@ export default function DashboardPage() {
           case 'statement':
             loadData('dep-statement', getDepositAccountStatement);
             break;
-          case 'download':
-            loadData('dep-download', getDepositAccountStatementDownload);
-            break;
           case 'insights':
             loadData('dep-insights', getDepositInsights);
             break;
@@ -306,75 +314,97 @@ export default function DashboardPage() {
     }
   };
 
-  const tabs = [
-    { id: 'portfolio' as TabId, label: 'Portfolio', icon: '💼' },
-    { id: 'deposit' as TabId, label: 'Deposits', icon: '🏦' },
-    { id: 'mutualfunds' as TabId, label: 'MF List', icon: '🎯' },
-    { id: 'mfdetails' as TabId, label: 'MF Details', icon: '📊' },
-    { id: 'equities' as TabId, label: 'Equities', icon: '📈' },
-    { id: 'etf' as TabId, label: 'ETF', icon: '💎' },
-    { id: 'termdeposit' as TabId, label: 'Term Deposit', icon: '💰' },
-    { id: 'rddeposit' as TabId, label: 'RD', icon: '📈' },
-    { id: 'firequest' as TabId, label: 'FI Requests', icon: '📋' },
-    { id: 'fips' as TabId, label: 'FIPs', icon: '🏢' },
-    { id: 'brokers' as TabId, label: 'Brokers', icon: '💹' },
-    { id: 'nps' as TabId, label: 'NPS', icon: '🛡️' },
-    { id: 'consents' as TabId, label: 'Consents', icon: '✅' },
+  // Prepare sidebar items with sub-items
+  const sidebarItems = [
+    { id: 'portfolio', label: 'Portfolio', icon: '💼' },
+    {
+      id: 'deposit',
+      label: 'Deposits',
+      icon: '🏦',
+      subItems: [
+        { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
+        { id: 'details', label: 'User Details', icon: '👤' },
+        { id: 'statement', label: 'Statement', icon: '📄' },
+        { id: 'insights', label: 'Insights', icon: '💡' },
+      ],
+    },
+    { id: 'mutualfunds', label: 'MF List', icon: '🎯' },
+    {
+      id: 'mfdetails',
+      label: 'MF Details',
+      icon: '📊',
+      subItems: [
+        { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
+        { id: 'folio', label: 'Holding Folio', icon: '📁' },
+        { id: 'details', label: 'User Details', icon: '👤' },
+        { id: 'statement', label: 'Statement', icon: '📄' },
+        { id: 'insights', label: 'Insights', icon: '💡' },
+        { id: 'analysis', label: 'Analysis', icon: '📈' },
+        { id: 'consent', label: 'MFC Consent', icon: '✍️' },
+        { id: 'approve', label: 'Approve', icon: '✅' },
+      ],
+    },
+    {
+      id: 'equities',
+      label: 'Equities',
+      icon: '📈',
+      subItems: [
+        { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
+        { id: 'holding-broker', label: 'Holding Broker', icon: '🏢' },
+        { id: 'demat', label: 'Demat Holding', icon: '📦' },
+        { id: 'broker', label: 'Broker Holding', icon: '💼' },
+        { id: 'details', label: 'User Details', icon: '👤' },
+        { id: 'combined', label: 'Equities + ETF', icon: '🔀' },
+        { id: 'statement', label: 'Statement', icon: '📄' },
+        { id: 'etf-statement', label: 'Equities+ETF Statement', icon: '📋' },
+      ],
+    },
+    {
+      id: 'etf',
+      label: 'ETF',
+      icon: '💎',
+      subItems: [
+        { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
+        { id: 'insights', label: 'Insights', icon: '💡' },
+        { id: 'statement', label: 'Statement', icon: '📄' },
+      ],
+    },
+    {
+      id: 'termdeposit',
+      label: 'Term Deposit',
+      icon: '💰',
+      subItems: [
+        { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
+        { id: 'details', label: 'User Details', icon: '👤' },
+        { id: 'statement', label: 'Statement', icon: '📄' },
+      ],
+    },
+    {
+      id: 'rddeposit',
+      label: 'RD',
+      icon: '📈',
+      subItems: [
+        { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
+        { id: 'details', label: 'User Details', icon: '👤' },
+        { id: 'statement', label: 'Statement', icon: '📄' },
+      ],
+    },
+    { id: 'firequest', label: 'FI Requests', icon: '📋' },
+    { id: 'fips', label: 'FIPs', icon: '🏢' },
+    { id: 'brokers', label: 'Brokers', icon: '💹' },
+    { id: 'nps', label: 'NPS', icon: '🛡️' },
+    { id: 'consents', label: 'Consents', icon: '✅' },
   ];
 
-  const subTabs = {
-    deposit: [
-      { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
-      { id: 'details', label: 'User Details', icon: '👤' },
-      { id: 'statement', label: 'Statement', icon: '📄' },
-      { id: 'download', label: 'Download', icon: '⬇️' },
-      { id: 'insights', label: 'Insights', icon: '💡' },
-    ],
-    termdeposit: [
-      { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
-      { id: 'details', label: 'User Details', icon: '👤' },
-      { id: 'statement', label: 'Statement', icon: '📄' },
-    ],
-    rddeposit: [
-      { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
-      { id: 'details', label: 'User Details', icon: '👤' },
-      { id: 'statement', label: 'Statement', icon: '📄' },
-    ],
-    mfdetails: [
-      { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
-      { id: 'folio', label: 'Holding Folio', icon: '📁' },
-      { id: 'details', label: 'User Details', icon: '👤' },
-      { id: 'statement', label: 'Statement', icon: '📄' },
-      { id: 'insights', label: 'Insights', icon: '💡' },
-      { id: 'analysis', label: 'Analysis', icon: '📈' },
-      { id: 'consent', label: 'MFC Consent', icon: '✍️' },
-      { id: 'approve', label: 'Approve', icon: '✅' },
-    ],
-    etf: [
-      { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
-      { id: 'insights', label: 'Insights', icon: '💡' },
-      { id: 'statement', label: 'Statement', icon: '📄' },
-    ],
-    equities: [
-      { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
-      { id: 'holding-broker', label: 'Holding Broker', icon: '🏢' },
-      { id: 'demat', label: 'Demat Holding', icon: '📦' },
-      { id: 'broker', label: 'Broker Holding', icon: '💼' },
-      { id: 'details', label: 'User Details', icon: '👤' },
-      { id: 'combined', label: 'Equities + ETF', icon: '🔀' },
-      { id: 'statement', label: 'Statement', icon: '📄' },
-      { id: 'etf-statement', label: 'Equities+ETF Statement', icon: '📋' },
-    ],
-  };
 
   const renderContent = () => {
     const currentLoading = loading[`${activeTab}-${activeSubTab[activeTab]}`] || loading[activeTab];
 
     if (currentLoading) {
-      return (
+  return (
         <div className="flex items-center justify-center py-12">
           <div className="w-12 h-12 border-4 border-accent-primary border-t-transparent rounded-full animate-spin" />
-        </div>
+            </div>
       );
     }
 
@@ -391,7 +421,7 @@ export default function DashboardPage() {
             >
               Retry
             </button>
-          </div>
+            </div>
         );
 
       case 'mutualfunds':
@@ -399,10 +429,28 @@ export default function DashboardPage() {
 
       case 'termdeposit':
         const tdData = data[`td-${activeSubTab.termdeposit}`];
+        if (activeSubTab.termdeposit === 'linked') {
+          return <TDLinkedAccountsDisplay data={tdData} />;
+        }
+        if (activeSubTab.termdeposit === 'details') {
+          return <UserDetailsDisplay data={tdData} />;
+        }
+        if (activeSubTab.termdeposit === 'statement') {
+          return <AccountStatementDisplay data={tdData} />;
+        }
         return <DataTable data={tdData} maxItems={10} />;
 
       case 'rddeposit':
         const rdData = data[`rd-${activeSubTab.rddeposit}`];
+        if (activeSubTab.rddeposit === 'linked') {
+          return <RDLinkedAccountsDisplay data={rdData} />;
+        }
+        if (activeSubTab.rddeposit === 'details') {
+          return <UserDetailsDisplay data={rdData} />;
+        }
+        if (activeSubTab.rddeposit === 'statement') {
+          return <AccountStatementDisplay data={rdData} />;
+        }
         return <DataTable data={rdData} maxItems={10} />;
 
       case 'mfdetails':
@@ -429,10 +477,43 @@ export default function DashboardPage() {
 
       case 'etf':
         const etfData = data[`etf-${activeSubTab.etf}`];
+        if (activeSubTab.etf === 'linked') {
+          return <ETFLinkedAccountsDisplay data={etfData} />;
+        }
+        if (activeSubTab.etf === 'insights') {
+          return <ETFInsightsDisplay data={etfData} />;
+        }
+        if (activeSubTab.etf === 'statement') {
+          return <ETFAccountStatementDisplay data={etfData} />;
+        }
         return <DataTable data={etfData} maxItems={10} />;
 
       case 'equities':
         const eqData = data[`eq-${activeSubTab.equities}`];
+        if (activeSubTab.equities === 'linked') {
+          return <EquitiesLinkedAccountsDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'holding-broker') {
+          return <EquitiesHoldingBrokerDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'demat') {
+          return <EquitiesDematHoldingDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'broker') {
+          return <EquitiesBrokerHoldingDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'details') {
+          return <EquitiesUserDetailsDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'combined') {
+          return <EquitiesETFsDematHoldingDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'statement') {
+          return <EquitiesAccountStatementDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'etf-statement') {
+          return <EquitiesAccountStatementDisplay data={eqData} />;
+        }
         return <DataTable data={eqData} maxItems={10} />;
 
       case 'deposit':
@@ -454,21 +535,17 @@ export default function DashboardPage() {
       case 'firequest':
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <span className="text-2xl">👤</span>
-                FI Request User
-              </h3>
-              <DataTable data={data['fi-user']} />
-            </div>
+            <FIRequestDisplay 
+              data={data['fi-user']} 
+              title="FI Request User" 
+              icon="👤" 
+            />
             {data['fi-account'] && (
-              <div>
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <span className="text-2xl">🏦</span>
-                  FI Request Account
-                </h3>
-                <DataTable data={data['fi-account']} />
-              </div>
+              <FIRequestDisplay 
+                data={data['fi-account']} 
+                title="FI Request Account" 
+                icon="🏦" 
+              />
             )}
           </div>
         );
@@ -483,7 +560,7 @@ export default function DashboardPage() {
         return <NPSLinkedAccountsDisplay data={data.nps} />;
 
       case 'consents':
-        return <DataTable data={data.consents} title="Account Consents" icon="✅" />;
+        return <AccountConsentsDisplay data={data.consents} />;
 
       default:
         return null;
@@ -497,61 +574,70 @@ export default function DashboardPage() {
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent-primary/20 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent-secondary/20 rounded-full blur-3xl animate-pulse" />
 
-      <div className="relative z-10 container mx-auto px-4 py-12 max-w-7xl">
+      <div className="relative z-10 flex">
+        {/* Sidebar */}
+        <Sidebar
+          items={sidebarItems}
+          activeItem={activeTab}
+          activeSubItem={activeSubTab[activeTab]}
+          onItemClick={(id) => {
+            setActiveTab(id as TabId);
+            // Set default sub-tab if it has sub-items
+            const item = sidebarItems.find(i => i.id === id);
+            if (item?.subItems && item.subItems.length > 0) {
+              setActiveSubTab(prev => ({ ...prev, [id]: item.subItems![0].id }));
+            }
+          }}
+          onSubItemClick={(itemId, subItemId) => {
+            setActiveTab(itemId as TabId);
+            setActiveSubTab(prev => ({ ...prev, [itemId]: subItemId }));
+          }}
+        />
+
+        {/* Main Content */}
+        <div className="flex-1 ml-64">
+          <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-12"
+              transition={{ duration: 0.5 }}
+          className="text-center mb-8"
         >
-          <h1 className="text-5xl font-bold mb-4">
-            <span className="gradient-text">Finfactor</span> Account Aggregator
+              <h1 className="text-4xl font-bold mb-2">
+                <span className="gradient-text">Finfactor</span> Account Aggregator
           </h1>
-          <p className="text-dark-textSecondary text-lg">
-            Complete financial data management platform
+              <p className="text-dark-textSecondary">
+                Complete financial data management platform
           </p>
         </motion.div>
 
-        {/* Main Tabs */}
-        <Tabs tabs={tabs} activeTab={activeTab} onTabChange={(id) => setActiveTab(id as TabId)} />
+            {/* Content Area */}
+            <motion.div
+              key={`${activeTab}-${activeSubTab[activeTab]}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="glass-effect rounded-2xl p-8 mb-8"
+            >
+              {renderContent()}
+            </motion.div>
 
-        {/* Sub Tabs */}
-        {subTabs[activeTab as keyof typeof subTabs] && (
-          <SubTabs
-            tabs={subTabs[activeTab as keyof typeof subTabs]}
-            activeTab={activeSubTab[activeTab]}
-            onTabChange={(id) => setActiveSubTab(prev => ({ ...prev, [activeTab]: id }))}
-            category={activeTab}
-          />
-        )}
-
-        {/* Content Area */}
-        <motion.div
-          key={`${activeTab}-${activeSubTab[activeTab]}`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="glass-effect rounded-2xl p-8 mb-12"
-        >
-          {renderContent()}
-        </motion.div>
-
-        {/* Actions Grid - Only show on portfolio tab */}
-        {activeTab === 'portfolio' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3">
-              <span className="w-2 h-8 bg-gradient-to-b from-accent-primary to-accent-secondary rounded-full" />
-              Quick Actions
-            </h2>
-
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              {/* Card 1: Unlink Account */}
+            {/* Actions Grid - Only show on portfolio tab */}
+            {activeTab === 'portfolio' && (
               <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3">
+                  <span className="w-2 h-8 bg-gradient-to-b from-accent-primary to-accent-secondary rounded-full" />
+                  Quick Actions
+                </h2>
+
+                <div className="grid md:grid-cols-3 gap-6 mb-8">
+              {/* Card 1: Unlink Account */}
+                        <motion.div
                 whileHover={{ scale: 1.02, y: -5 }}
                 transition={{ type: 'spring', stiffness: 300 }}
                 className="glass-effect rounded-2xl p-6 hover:border-accent-danger transition-colors"
@@ -570,7 +656,7 @@ export default function DashboardPage() {
                       d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
                     />
                   </svg>
-                </div>
+                              </div>
                 <h3 className="text-xl font-semibold mb-2">Unlink Account</h3>
                 <p className="text-dark-textSecondary text-sm mb-6">
                   Remove linked bank account from the system
@@ -611,7 +697,7 @@ export default function DashboardPage() {
                       d="M13 10V3L4 14h7v7l9-11h-7z"
                     />
                   </svg>
-                </div>
+                                </div>
                 <h3 className="text-xl font-semibold mb-2">Connect Bank</h3>
                 <p className="text-dark-textSecondary text-sm mb-6">
                   Initiate web flow to connect your bank account
@@ -630,7 +716,7 @@ export default function DashboardPage() {
                     'Connect'
                   )}
                 </button>
-              </motion.div>
+                        </motion.div>
 
               {/* Card 3: Direct Consent (V1) */}
               <motion.div
@@ -682,19 +768,18 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="glass-effect rounded-2xl p-8"
+                  className="glass-effect rounded-2xl p-8 border-2 border-accent-primary/20"
                 >
-                  <h3 className="text-2xl font-semibold mb-6 flex items-center gap-3">
-                    <span className="w-2 h-8 bg-gradient-to-b from-accent-secondary to-accent-primary rounded-full" />
-                    Consent Response
-                  </h3>
-                  <DataTable data={consentV1Data} />
+                  <ConsentResponseDisplay data={consentV1Data} />
                 </motion.div>
               )}
-            </AnimatePresence>
-          </motion.div>
-        )}
+        </AnimatePresence>
+              </motion.div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+
