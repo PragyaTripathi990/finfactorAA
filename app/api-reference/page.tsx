@@ -36,7 +36,7 @@ const apiEndpoints: ApiCategory[] = [
         curl: 'curl -s http://localhost:3000/api/test/layer-a | jq .',
         description: 'Tests User CRUD, API logging, Consent management',
         sampleOutput: '{ "summary": { "passed": 5, "total": 5, "status": "ALL_PASS" } }',
-      },
+      } as ApiEndpoint,
       {
         name: 'Run Layer B Tests',
         method: 'GET',
@@ -302,7 +302,7 @@ export default function ApiReferencePage() {
 
                 {isExpanded && (
                   <div className="space-y-4 mt-6">
-                    {category.endpoints.map((endpoint, idx) => {
+                    {category.endpoints.map((endpoint: ApiEndpoint, idx) => {
                       const cmdId = `${category.category}-${idx}`;
                       return (
                         <div
