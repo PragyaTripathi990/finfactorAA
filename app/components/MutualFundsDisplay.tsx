@@ -10,6 +10,8 @@ interface MutualFundCardProps {
 }
 
 function MutualFundCard({ fund, index }: MutualFundCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const formatDate = (dateString: string) => {
     if (!dateString) return '—';
     const date = new Date(dateString);
@@ -19,6 +21,26 @@ function MutualFundCard({ fund, index }: MutualFundCardProps) {
       day: 'numeric',
     });
   };
+
+  const formatCurrency = (amount: number | string) => {
+    if (!amount && amount !== 0) return '₹0.00';
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2,
+    }).format(numAmount);
+  };
+
+  const renderField = (key: string, value: any) => {
+    if (value === null || value === undefined) return '—';
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+  };
+
+  // Get all fields except the ones already displayed
+  const displayedKeys = ['schemeName', 'schemeNavName', 'amc', 'code', 'schemeCategory', 'schemeType', 'schemeStructure', 'launchDate', 'isin', 'logo'];
+  const otherFields = Object.entries(fund).filter(([key]) => !displayedKeys.includes(key));
 
   return (
     <motion.div
@@ -60,7 +82,7 @@ function MutualFundCard({ fund, index }: MutualFundCardProps) {
       </div>
 
       {/* Details Grid */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-4 mb-4">
         {fund.schemeCategory && (
           <div>
             <p className="text-xs font-semibold text-dark-textSecondary mb-1">Category</p>
@@ -99,7 +121,55 @@ function MutualFundCard({ fund, index }: MutualFundCardProps) {
             <p className="text-sm font-mono text-dark-text">{fund.isin}</p>
           </div>
         )}
+
+        {/* Show value fields if available */}
+        {fund.currentValue !== undefined && (
+          <div>
+            <p className="text-xs font-semibold text-dark-textSecondary mb-1">Current Value</p>
+            <p className="text-sm font-bold text-accent-success">{formatCurrency(fund.currentValue)}</p>
+          </div>
+        )}
+
+        {fund.costValue !== undefined && (
+          <div>
+            <p className="text-xs font-semibold text-dark-textSecondary mb-1">Cost Value</p>
+            <p className="text-sm font-bold text-accent-warning">{formatCurrency(fund.costValue)}</p>
+          </div>
+        )}
       </div>
+
+      {/* Expandable All Fields Section */}
+      {otherFields.length > 0 && (
+        <div>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full text-left glass-effect rounded-lg p-3 hover:border-accent-primary/50 transition-all mb-3"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-accent-primary flex items-center gap-2">
+                <span>📋</span> All Fields ({otherFields.length})
+              </span>
+              <span className="text-dark-textSecondary">
+                {isExpanded ? '▼' : '▶'}
+              </span>
+            </div>
+          </button>
+          {isExpanded && (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {otherFields.map(([key, value]) => (
+                <div key={key} className="glass-effect rounded-lg p-3">
+                  <div className="text-xs font-semibold text-dark-textSecondary mb-1">
+                    {camelToTitleCase(key)}
+                  </div>
+                  <div className="text-sm text-dark-text break-words">
+                    {renderField(key, value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -109,7 +179,8 @@ interface MutualFundsDisplayProps {
 }
 
 export default function MutualFundsDisplay({ data }: MutualFundsDisplayProps) {
-  const maxItems = 6;
+  const [showAll, setShowAll] = useState(false);
+  const maxItems = showAll ? 1000 : 6;
 
   if (!data) {
     return (
@@ -145,32 +216,48 @@ export default function MutualFundsDisplay({ data }: MutualFundsDisplayProps) {
   return (
     <div className="space-y-6">
       {/* Summary Banner */}
-      {hasMore && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-effect rounded-xl p-4 border-2 border-accent-primary/30 bg-gradient-to-r from-accent-primary/10 to-accent-secondary/10"
-        >
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">📊</span>
-              <div>
-                <p className="font-semibold text-dark-text">
-                  Showing {displayFunds.length} of {funds.length} schemes
-                </p>
-                <p className="text-sm text-dark-textSecondary">
-                  Limited to top {maxItems} for optimal performance
-                </p>
-              </div>
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-effect rounded-xl p-4 border-2 border-accent-primary/30 bg-gradient-to-r from-accent-primary/10 to-accent-secondary/10"
+      >
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">📊</span>
+            <div>
+              <p className="font-semibold text-dark-text">
+                {showAll ? `Showing all ${funds.length} schemes` : `Showing ${displayFunds.length} of ${funds.length} schemes`}
+              </p>
+              <p className="text-sm text-dark-textSecondary">
+                {showAll ? 'All schemes displayed' : `Limited to top ${maxItems} - click "Show All" to see all`}
+              </p>
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {hasMore && !showAll && (
+              <button
+                onClick={() => setShowAll(true)}
+                className="px-4 py-2 rounded-lg bg-accent-primary text-white hover:bg-accent-primary/80 transition-all text-sm font-semibold"
+              >
+                Show All ({funds.length})
+              </button>
+            )}
+            {showAll && (
+              <button
+                onClick={() => setShowAll(false)}
+                className="px-4 py-2 rounded-lg bg-dark-border text-dark-textSecondary hover:bg-dark-border/80 transition-all text-sm font-semibold"
+              >
+                Show Less
+              </button>
+            )}
             <div className="px-4 py-2 rounded-lg bg-accent-primary/20 border border-accent-primary/30">
               <p className="text-xs font-semibold text-accent-primary">
                 {((displayFunds.length / funds.length) * 100).toFixed(1)}% displayed
               </p>
             </div>
           </div>
-        </motion.div>
-      )}
+        </div>
+      </motion.div>
 
       {/* Funds Grid */}
       <div className="grid gap-6">

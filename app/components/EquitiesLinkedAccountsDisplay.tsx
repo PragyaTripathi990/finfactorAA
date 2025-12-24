@@ -2,13 +2,13 @@
 
 import { motion } from 'framer-motion';
 import { useState, useMemo } from 'react';
-import { camelToTitleCase, formatValue } from '@/lib/formatters';
+import { camelToTitleCase } from '@/lib/formatters';
 
-interface DepositLinkedAccountsDisplayProps {
+interface EquitiesLinkedAccountsDisplayProps {
   data: any;
 }
 
-export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAccountsDisplayProps) {
+export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAccountsDisplayProps) {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
   const [expandedFIPs, setExpandedFIPs] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,25 +32,25 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
     }).filter((fip: any) => fip.linkedAccounts.length > 0);
   }, [fipData, searchQuery]);
 
+  // Extract other data values after hooks
+  const totalFiData = data?.totalFiData || 0;
+  const totalFiDataToBeFetched = data?.totalFiDataToBeFetched || 0;
+  const currentValue = data?.currentValue || 0;
+  const totalBrokers = data?.totalBrokers || 0;
+
   // Early return after all hooks
   if (!data) {
     return (
       <div className="text-center py-12 text-dark-textSecondary">
         <p className="text-5xl mb-3">📭</p>
-        <p className="text-lg">No deposit linked accounts data available</p>
+        <p className="text-lg">No equities linked accounts data available</p>
       </div>
     );
   }
 
-  // Extract other data values after hooks
-  const totalFiData = data.totalFiData || 0;
-  const totalFiDataToBeFetched = data.totalFiDataToBeFetched || 0;
-  const currentBalance = data.currentBalance || 0;
-  const lastFetchDate = data.lastFetchDate || null;
-
   // Format currency
   const formatCurrency = (amount: number | string) => {
-    if (!amount) return '₹0.00';
+    if (!amount && amount !== 0) return '₹0.00';
     const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -95,15 +95,23 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
     setExpandedFIPs(newSet);
   };
 
-  // Render a field value
+  // Toggle showing all fields
+  const toggleShowAllFields = (accountId: string) => {
+    const newSet = new Set(showAllFields);
+    if (newSet.has(accountId)) {
+      newSet.delete(accountId);
+    } else {
+      newSet.add(accountId);
+    }
+    setShowAllFields(newSet);
+  };
+
+  // Render field value
   const renderField = (key: string, value: any, level: number = 0) => {
     if (value === null || value === undefined) {
-      return (
-        <div className="text-dark-textSecondary italic text-sm">—</div>
-      );
+      return <span className="text-dark-textSecondary italic text-sm">—</span>;
     }
 
-    // Handle arrays
     if (Array.isArray(value)) {
       if (value.length === 0) {
         return <div className="text-dark-textSecondary text-sm">Empty array</div>;
@@ -130,7 +138,6 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       );
     }
 
-    // Handle nested objects
     if (typeof value === 'object') {
       return (
         <div className="ml-4 border-l-2 border-accent-primary/30 pl-3 space-y-1">
@@ -144,9 +151,8 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       );
     }
 
-    // Handle special formatting
     const lowerKey = key.toLowerCase();
-    if (lowerKey.includes('balance') || lowerKey.includes('amount') || lowerKey.includes('value')) {
+    if (lowerKey.includes('balance') || lowerKey.includes('amount') || lowerKey.includes('value') || lowerKey.includes('price') || lowerKey.includes('cost')) {
       if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
         return <span className="text-accent-success font-semibold">{formatCurrency(value)}</span>;
       }
@@ -167,33 +173,33 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
     return <span className="text-dark-text break-words">{String(value)}</span>;
   };
 
-  // Toggle showing all fields for an account
-  const toggleShowAllFields = (accountId: string) => {
-    const newSet = new Set(showAllFields);
-    if (newSet.has(accountId)) {
-      newSet.delete(accountId);
-    } else {
-      newSet.add(accountId);
-    }
-    setShowAllFields(newSet);
-  };
-
   // Render all fields of an account
   const renderAccountFields = (account: any, accountId: string) => {
-    const isExpanded = expandedAccounts.has(accountId);
-    const showAll = showAllFields.has(accountId);
     const fields = Object.entries(account);
     
-    // Group fields by category for better organization
+    // Group fields by category
     const accountFields = fields.filter(([key]) => 
       key.toLowerCase().includes('account') || 
       key.toLowerCase().includes('masked') ||
       key.toLowerCase().includes('ref') ||
-      key.toLowerCase().includes('fidataid')
+      key.toLowerCase().includes('fidataid') ||
+      key.toLowerCase().includes('demat') ||
+      key.toLowerCase().includes('broker')
     );
     
-    const holderFields = fields.filter(([key]) => 
-      key.toLowerCase().includes('holder')
+    const holdingFields = fields.filter(([key]) => 
+      key.toLowerCase().includes('holding') ||
+      key.toLowerCase().includes('units') ||
+      key.toLowerCase().includes('isin') ||
+      key.toLowerCase().includes('symbol')
+    );
+    
+    const valueFields = fields.filter(([key]) => 
+      key.toLowerCase().includes('value') ||
+      key.toLowerCase().includes('cost') ||
+      key.toLowerCase().includes('amount') ||
+      key.toLowerCase().includes('balance') ||
+      key.toLowerCase().includes('price')
     );
     
     const consentFields = fields.filter(([key]) => 
@@ -201,16 +207,6 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       key.toLowerCase().includes('purpose')
     );
 
-    // Extract fiData separately as it's a major nested object
-    const fiDataField = fields.find(([key]) => key.toLowerCase() === 'fidata');
-    const fiDataValue = fiDataField ? fiDataField[1] : null;
-    
-    const balanceFields = fields.filter(([key]) => 
-      key.toLowerCase().includes('balance') ||
-      key.toLowerCase().includes('amount') ||
-      key.toLowerCase().includes('value')
-    );
-    
     const dateFields = fields.filter(([key]) => 
       key.toLowerCase().includes('date') ||
       key.toLowerCase().includes('time')
@@ -221,14 +217,48 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       key.toLowerCase().includes('status') ||
       key.toLowerCase().includes('active')
     );
+
+    const holderFields = fields.filter(([key]) => 
+      key.toLowerCase().includes('holder') ||
+      key.toLowerCase().includes('pan') ||
+      key.toLowerCase().includes('email') ||
+      key.toLowerCase().includes('mobile') ||
+      key.toLowerCase().includes('address') ||
+      key.toLowerCase().includes('dob') ||
+      key.toLowerCase().includes('nominee') ||
+      key.toLowerCase().includes('ckyc')
+    );
+
+    const brokerFields = fields.filter(([key]) => 
+      key.toLowerCase().includes('broker') && 
+      !key.toLowerCase().includes('holding')
+    );
+
+    const fipFields = fields.filter(([key]) => 
+      key.toLowerCase().includes('fip') && 
+      !key.toLowerCase().includes('fidata')
+    );
+
+    const requestFields = fields.filter(([key]) => 
+      key.toLowerCase().includes('request') ||
+      key.toLowerCase().includes('count')
+    );
+
+    // Extract fiData separately
+    const fiDataField = fields.find(([key]) => key.toLowerCase() === 'fidata');
+    const fiDataValue = fiDataField ? fiDataField[1] : null;
     
     const otherFields = fields.filter(([key]) => 
       !accountFields.some(([k]) => k === key) &&
-      !holderFields.some(([k]) => k === key) &&
+      !holdingFields.some(([k]) => k === key) &&
+      !valueFields.some(([k]) => k === key) &&
       !consentFields.some(([k]) => k === key) &&
-      !balanceFields.some(([k]) => k === key) &&
       !dateFields.some(([k]) => k === key) &&
       !statusFields.some(([k]) => k === key) &&
+      !holderFields.some(([k]) => k === key) &&
+      !brokerFields.some(([k]) => k === key) &&
+      !fipFields.some(([k]) => k === key) &&
+      !requestFields.some(([k]) => k === key) &&
       key.toLowerCase() !== 'fidata'
     );
 
@@ -255,15 +285,36 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           </div>
         )}
 
-        {/* Balance & Amount Fields */}
-        {balanceFields.length > 0 && (
+        {/* Holding Information */}
+        {holdingFields.length > 0 && (
           <div>
             <h5 className="text-sm font-bold text-accent-success mb-2 flex items-center gap-2">
-              <span>💰</span> Balance & Amount Information
+              <span>📊</span> Holding Information
             </h5>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {balanceFields.map(([key, value]) => (
+              {holdingFields.map(([key, value]) => (
                 <div key={key} className="glass-effect rounded-lg p-3 border border-accent-success/20">
+                  <div className="text-xs font-semibold text-dark-textSecondary mb-1">
+                    {camelToTitleCase(key)}
+                  </div>
+                  <div className="text-sm">
+                    {renderField(key, value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Value & Price Information */}
+        {valueFields.length > 0 && (
+          <div>
+            <h5 className="text-sm font-bold text-accent-warning mb-2 flex items-center gap-2">
+              <span>💰</span> Value & Price Information
+            </h5>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {valueFields.map(([key, value]) => (
+                <div key={key} className="glass-effect rounded-lg p-3 border border-accent-warning/20">
                   <div className="text-xs font-semibold text-dark-textSecondary mb-1">
                     {camelToTitleCase(key)}
                   </div>
@@ -279,7 +330,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
         {/* Date & Time Fields */}
         {dateFields.length > 0 && (
           <div>
-            <h5 className="text-sm font-bold text-accent-warning mb-2 flex items-center gap-2">
+            <h5 className="text-sm font-bold text-accent-secondary mb-2 flex items-center gap-2">
               <span>📅</span> Date & Time Information
             </h5>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -300,7 +351,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
         {/* Status Fields */}
         {statusFields.length > 0 && (
           <div>
-            <h5 className="text-sm font-bold text-accent-secondary mb-2 flex items-center gap-2">
+            <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>⚡</span> Status Information
             </h5>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -318,7 +369,112 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           </div>
         )}
 
-        {/* FI Data - This is the main nested object with all account details */}
+        {/* Holder Information */}
+        {holderFields.length > 0 && (
+          <div>
+            <h5 className="text-sm font-bold text-accent-secondary mb-2 flex items-center gap-2">
+              <span>👤</span> Holder Information
+            </h5>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {holderFields.map(([key, value]) => (
+                <div key={key} className="glass-effect rounded-lg p-3 border border-accent-secondary/20">
+                  <div className="text-xs font-semibold text-dark-textSecondary mb-1">
+                    {camelToTitleCase(key)}
+                  </div>
+                  <div className="text-sm">
+                    {renderField(key, value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Broker Information */}
+        {brokerFields.length > 0 && (
+          <div>
+            <h5 className="text-sm font-bold text-accent-warning mb-2 flex items-center gap-2">
+              <span>🏢</span> Broker Information
+            </h5>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {brokerFields.map(([key, value]) => (
+                <div key={key} className="glass-effect rounded-lg p-3 border border-accent-warning/20">
+                  <div className="text-xs font-semibold text-dark-textSecondary mb-1">
+                    {camelToTitleCase(key)}
+                  </div>
+                  <div className="text-sm">
+                    {renderField(key, value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* FIP Information */}
+        {fipFields.length > 0 && (
+          <div>
+            <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
+              <span>🏦</span> FIP Information
+            </h5>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {fipFields.map(([key, value]) => (
+                <div key={key} className="glass-effect rounded-lg p-3">
+                  <div className="text-xs font-semibold text-dark-textSecondary mb-1">
+                    {camelToTitleCase(key)}
+                  </div>
+                  <div className="text-sm">
+                    {renderField(key, value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Request & Count Information */}
+        {requestFields.length > 0 && (
+          <div>
+            <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
+              <span>📊</span> Request & Count Information
+            </h5>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {requestFields.map(([key, value]) => (
+                <div key={key} className="glass-effect rounded-lg p-3">
+                  <div className="text-xs font-semibold text-dark-textSecondary mb-1">
+                    {camelToTitleCase(key)}
+                  </div>
+                  <div className="text-sm">
+                    {renderField(key, value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Consent Information */}
+        {consentFields.length > 0 && (
+          <div>
+            <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
+              <span>✅</span> Consent Information
+            </h5>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {consentFields.map(([key, value]) => (
+                <div key={key} className="glass-effect rounded-lg p-3">
+                  <div className="text-xs font-semibold text-dark-textSecondary mb-1">
+                    {camelToTitleCase(key)}
+                  </div>
+                  <div className="text-sm">
+                    {renderField(key, value)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* FI Data */}
         {fiDataValue && (
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -384,49 +540,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           </div>
         )}
 
-        {/* Holder Information */}
-        {holderFields.length > 0 && (
-          <div>
-            <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
-              <span>👤</span> Account Holder Information
-            </h5>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {holderFields.map(([key, value]) => (
-                <div key={key} className="glass-effect rounded-lg p-3">
-                  <div className="text-xs font-semibold text-dark-textSecondary mb-1">
-                    {camelToTitleCase(key)}
-                  </div>
-                  <div className="text-sm">
-                    {renderField(key, value)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Consent Information */}
-        {consentFields.length > 0 && (
-          <div>
-            <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
-              <span>✅</span> Consent Information
-            </h5>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {consentFields.map(([key, value]) => (
-                <div key={key} className="glass-effect rounded-lg p-3">
-                  <div className="text-xs font-semibold text-dark-textSecondary mb-1">
-                    {camelToTitleCase(key)}
-                  </div>
-                  <div className="text-sm">
-                    {renderField(key, value)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Other Fields - Show all remaining fields */}
+        {/* Other Fields */}
         {otherFields.length > 0 && (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
@@ -446,30 +560,6 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
             </div>
           </div>
         )}
-
-        {/* Raw JSON View (Collapsible) */}
-        <div>
-          <button
-            onClick={() => toggleAccount(accountId + '-raw')}
-            className="w-full text-left glass-effect rounded-lg p-3 hover:border-accent-primary/50 transition-all"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-accent-primary flex items-center gap-2">
-                <span>🔍</span> View Raw JSON Data
-              </span>
-              <span className="text-dark-textSecondary">
-                {expandedAccounts.has(accountId + '-raw') ? '▼' : '▶'}
-              </span>
-            </div>
-          </button>
-          {expandedAccounts.has(accountId + '-raw') && (
-            <div className="mt-2 glass-effect rounded-lg p-4">
-              <pre className="text-xs text-dark-text overflow-x-auto">
-                {JSON.stringify(account, null, 2)}
-              </pre>
-            </div>
-          )}
-        </div>
       </div>
     );
   };
@@ -486,7 +576,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           <span className="text-2xl">🔍</span>
           <input
             type="text"
-            placeholder="Search accounts, account numbers, names, or any field..."
+            placeholder="Search accounts, ISIN, brokers, symbols..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-transparent border-none outline-none text-dark-text placeholder-dark-textSecondary"
@@ -508,7 +598,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       </motion.div>
 
       {/* Summary Cards */}
-      <div className="grid md:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -547,28 +637,31 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           <div className="flex items-center gap-3 mb-2">
             <span className="text-3xl">💰</span>
             <div>
-              <p className="text-sm text-dark-textSecondary">Current Balance</p>
-              <p className="text-2xl font-bold gradient-text">{formatCurrency(currentBalance)}</p>
+              <p className="text-sm text-dark-textSecondary">Current Value</p>
+              <p className="text-2xl font-bold gradient-text">{formatCurrency(currentValue)}</p>
             </div>
           </div>
         </motion.div>
 
-        {lastFetchDate && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="glass-effect rounded-xl p-6 border-2 border-accent-secondary/30"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-3xl">🕐</span>
-              <div>
-                <p className="text-sm text-dark-textSecondary">Last Fetch Date</p>
-                <p className="text-lg font-bold text-dark-text">{formatDate(lastFetchDate)}</p>
-              </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="glass-effect rounded-xl p-6 border-2 border-accent-secondary/30"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-3xl">💼</span>
+            <div>
+              <p className="text-sm text-dark-textSecondary">Total Accounts</p>
+              <p className="text-2xl font-bold text-dark-text">
+                {filteredFipData.reduce((sum: number, fip: any) => sum + (fip.linkedAccounts?.length || 0), 0)}
+              </p>
+              {totalBrokers > 0 && (
+                <p className="text-xs text-dark-textSecondary mt-1">{totalBrokers} Broker{totalBrokers !== 1 ? 's' : ''}</p>
+              )}
             </div>
-          </motion.div>
-        )}
+          </div>
+        </motion.div>
       </div>
 
       {/* FIP Data */}
@@ -578,14 +671,6 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           <p className="text-lg">
             {searchQuery ? 'No accounts found matching your search' : 'No FIP data available'}
           </p>
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="mt-4 px-4 py-2 bg-accent-primary rounded-lg hover:bg-accent-primary/80 transition-all text-sm"
-            >
-              Clear Search
-            </button>
-          )}
         </div>
       ) : (
         filteredFipData.map((fip: any, fipIdx: number) => {
@@ -626,7 +711,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                 </button>
               </div>
 
-              {/* FIP Details (if expanded) */}
+              {/* FIP Details */}
               {isFIPExpanded && (
                 <div className="mb-6 space-y-2">
                   <h4 className="text-sm font-bold text-accent-primary mb-2">FIP Information</h4>
@@ -655,7 +740,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ) : (
                 <div className="space-y-4">
                   {linkedAccounts.map((account: any, accIdx: number) => {
-                    const accountId = account.fiDataId || account.accountRefNumber || `acc-${fipIdx}-${accIdx}`;
+                    const accountId = account.fiDataId || account.accountRefNumber || account.dematId || `acc-${fipIdx}-${accIdx}`;
                     const isExpanded = expandedAccounts.has(accountId);
 
                     return (
@@ -673,13 +758,13 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                         >
                           <div className="flex items-center justify-between gap-4">
                             <div className="flex items-center gap-3 flex-1">
-                              <span className="text-2xl">💳</span>
+                              <span className="text-2xl">💼</span>
                               <div className="flex-1">
                                 <h4 className="text-lg font-semibold text-dark-text">
-                                  {account.maskedAccNumber || account.accountRefNumber || account.fiDataId || 'Account'}
+                                  {account.issuerName || account.symbol || account.isinDescription || account.dematId || account.accountRefNumber || 'Account'}
                                 </h4>
-                                {account.accountName && (
-                                  <p className="text-sm text-dark-textSecondary">{account.accountName}</p>
+                                {account.brokerName && (
+                                  <p className="text-sm text-dark-textSecondary">{account.brokerName}</p>
                                 )}
                                 <div className="flex flex-wrap gap-2 mt-2">
                                   {account.accountType && (
@@ -701,9 +786,9 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                               </div>
                             </div>
                             <div className="text-right">
-                              {account.accountCurrentBalance !== undefined && (
+                              {account.currentValue !== undefined && (
                                 <p className="text-xl font-bold gradient-text">
-                                  {formatCurrency(account.accountCurrentBalance)}
+                                  {formatCurrency(account.currentValue)}
                                 </p>
                               )}
                               <span className="text-dark-textSecondary text-sm block mt-1">
@@ -716,7 +801,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                           </div>
                         </button>
 
-                        {/* Account Fields (if expanded) */}
+                        {/* Account Fields */}
                         {isExpanded && (
                           <div className="pt-4 border-t border-dark-border">
                             {renderAccountFields(account, accountId)}
@@ -731,83 +816,6 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           );
         })
       )}
-
-      {/* Show Total Fields Count */}
-      {filteredFipData.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="glass-effect rounded-xl p-4 border border-accent-primary/20"
-        >
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <p className="text-sm font-semibold text-dark-text">
-                📊 Total Accounts: {filteredFipData.reduce((sum: number, fip: any) => sum + (fip.linkedAccounts?.length || 0), 0)}
-                {searchQuery && ` (filtered from ${fipData.reduce((sum: number, fip: any) => sum + (fip.linkedAccounts?.length || 0), 0)} total)`}
-              </p>
-              <p className="text-xs text-dark-textSecondary mt-1">
-                All fields from API response are displayed above. Expand any account to see complete details including nested fiData object.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  // Expand all accounts
-                  const allAccountIds = new Set<string>();
-                  filteredFipData.forEach((fip: any) => {
-                    (fip.linkedAccounts || []).forEach((account: any) => {
-                      const accountId = account.fiDataId || account.accountRefNumber || `acc-${fip.fipId}-${account}`;
-                      allAccountIds.add(accountId);
-                    });
-                  });
-                  setExpandedAccounts(allAccountIds);
-                }}
-                className="px-4 py-2 bg-accent-primary/20 text-accent-primary rounded-lg hover:bg-accent-primary/30 transition-all text-sm font-semibold"
-              >
-                Expand All Accounts
-              </button>
-              <button
-                onClick={() => {
-                  setExpandedAccounts(new Set());
-                  setExpandedFIPs(new Set());
-                  setShowAllFields(new Set());
-                }}
-                className="px-4 py-2 bg-dark-border text-dark-textSecondary rounded-lg hover:bg-dark-border/80 transition-all text-sm font-semibold"
-              >
-                Collapse All
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Raw JSON View for entire response */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="glass-effect rounded-xl p-4 border border-accent-secondary/20"
-      >
-        <button
-          onClick={() => toggleAccount('raw-response')}
-          className="w-full text-left"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-accent-secondary flex items-center gap-2">
-              <span>🔍</span> View Complete Raw API Response JSON
-            </span>
-            <span className="text-dark-textSecondary">
-              {expandedAccounts.has('raw-response') ? '▼' : '▶'}
-            </span>
-          </div>
-        </button>
-        {expandedAccounts.has('raw-response') && (
-          <div className="mt-4 glass-effect rounded-lg p-4 max-h-96 overflow-auto">
-            <pre className="text-xs text-dark-text whitespace-pre-wrap break-words">
-              {JSON.stringify(data, null, 2)}
-            </pre>
-          </div>
-        )}
-      </motion.div>
     </div>
   );
 }

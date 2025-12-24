@@ -1,14 +1,6 @@
 'use server';
 
 import { makeAuthenticatedRequest } from '@/lib/finfactor';
-import { 
-  upsertBrokers, 
-  upsertMFHoldings, 
-  upsertEquityHoldings, 
-  upsertETFHoldings, 
-  upsertNPSHoldings,
-  upsertAllFips,
-} from '@/lib/supabase-server';
 
 /**
  * Get user details - returns the full data object
@@ -154,16 +146,38 @@ export async function getMutualFunds(): Promise<any> {
 
 /**
  * Get FI request user data
+ * API returns text/plain response, not JSON
  */
 export async function getFIRequestUser(): Promise<any> {
   try {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/firequest-user',
       {
-        uniqueIdentifier: '9823972748',
+        uniqueIdentifier: '8956545791',
       }
     );
-    return response.data || response;
+    
+    // Handle text/plain response (API returns string, not JSON)
+    if (typeof response === 'string') {
+      return {
+        success: true,
+        message: response,
+        data: response
+      };
+    }
+    
+    // Handle JSON response if API changes
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      return response;
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching FI request user:', error);
     return null;
@@ -172,17 +186,92 @@ export async function getFIRequestUser(): Promise<any> {
 
 /**
  * Get FI request account data
+ * Dynamically fetches accountId from deposit linked accounts
+ * API returns text/plain response, not JSON
  */
 export async function getFIRequestAccount(): Promise<any> {
   try {
+    // First, get linked accounts to extract accountId
+    const linkedAccounts = await getDepositUserLinkedAccounts();
+    
+    // Extract accountId from linked accounts
+    let accountId = '';
+    
+    if (linkedAccounts) {
+      // Check for fipData structure
+      if (linkedAccounts.fipData && Array.isArray(linkedAccounts.fipData)) {
+        for (const fip of linkedAccounts.fipData) {
+          if (fip.linkedAccounts && Array.isArray(fip.linkedAccounts)) {
+            const account = fip.linkedAccounts.find((acc: any) => acc.accountRefNumber || acc.fiDataId || acc.accountId);
+            if (account?.accountRefNumber) {
+              accountId = account.accountRefNumber;
+              break;
+            } else if (account?.fiDataId) {
+              accountId = account.fiDataId;
+              break;
+            } else if (account?.accountId) {
+              accountId = account.accountId;
+              break;
+            }
+          }
+        }
+      }
+      // Check for direct array structure
+      else if (Array.isArray(linkedAccounts)) {
+        const account = linkedAccounts.find((acc: any) => acc.accountRefNumber || acc.fiDataId || acc.accountId);
+        if (account?.accountRefNumber) {
+          accountId = account.accountRefNumber;
+        } else if (account?.fiDataId) {
+          accountId = account.fiDataId;
+        } else if (account?.accountId) {
+          accountId = account.accountId;
+        }
+      }
+      // Check for direct object with accountId
+      else if (linkedAccounts.accountRefNumber) {
+        accountId = linkedAccounts.accountRefNumber;
+      } else if (linkedAccounts.fiDataId) {
+        accountId = linkedAccounts.fiDataId;
+      } else if (linkedAccounts.accountId) {
+        accountId = linkedAccounts.accountId;
+      }
+    }
+    
+    if (!accountId) {
+      console.warn('No accountId found in linked accounts, using fallback');
+      return null;
+    }
+    
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/firequest-account',
       {
         uniqueIdentifier: '8956545791',
-        accountId: 'b986d95d-709e-45a7-8548-39814173ec9c',
+        accountId: accountId,
       }
     );
-    return response.data || response;
+    
+    // Handle text/plain response (API returns string, not JSON)
+    if (typeof response === 'string') {
+      return {
+        success: true,
+        message: response,
+        data: response,
+        accountId: accountId
+      };
+    }
+    
+    // Handle JSON response if API changes
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return { ...response.data, accountId };
+      }
+      if (response.data && !response.success) {
+        return { ...response.data, accountId };
+      }
+      return { ...response, accountId };
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching FI request account:', error);
     return null;
@@ -198,15 +287,7 @@ export async function getFIPs(): Promise<any> {
       '/pfm/api/v2/fips',
       {}
     );
-    const data = response.data || response;
-    
-    // 💾 Persist to database
-    if (Array.isArray(data)) {
-      const result = await upsertAllFips(data);
-      console.log(`💾 FIPs: Saved ${result.saved} to database`);
-    }
-    
-    return data;
+    return response.data || response;
   } catch (error) {
     console.error('Error fetching FIPs:', error);
     return null;
@@ -222,15 +303,7 @@ export async function getBrokers(): Promise<any> {
       '/pfm/api/v2/brokers',
       {}
     );
-    const data = response.data || response;
-    
-    // 💾 Persist to database
-    if (Array.isArray(data)) {
-      const result = await upsertBrokers(data);
-      console.log(`💾 Brokers: Saved ${result.saved} to database`);
-    }
-    
-    return data;
+    return response.data || response;
   } catch (error) {
     console.error('Error fetching brokers:', error);
     return null;
@@ -242,22 +315,27 @@ export async function getBrokers(): Promise<any> {
  */
 export async function getNPSLinkedAccounts(): Promise<any> {
   try {
-    const uniqueIdentifier = '8956545791';
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/nps/user-linked-accounts',
       {
-        uniqueIdentifier,
+        uniqueIdentifier: '8956545791',
       }
     );
-    const data = response.data || response;
     
-    // 💾 Persist to database
-    if (data) {
-      const result = await upsertNPSHoldings(uniqueIdentifier, data);
-      console.log(`💾 NPS Holdings: Saved ${result.saved} to database`);
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
     }
     
-    return data;
+    return response || null;
   } catch (error) {
     console.error('Error fetching NPS linked accounts:', error);
     return null;
@@ -266,17 +344,83 @@ export async function getNPSLinkedAccounts(): Promise<any> {
 
 /**
  * Get account consents latest
+ * Dynamically fetches accountId from deposit linked accounts
  */
 export async function getAccountConsents(): Promise<any> {
   try {
+    // First, get linked accounts to extract accountId
+    const linkedAccounts = await getDepositUserLinkedAccounts();
+    
+    // Extract accountId from linked accounts
+    let accountId = '';
+    
+    if (linkedAccounts) {
+      // Check for fipData structure
+      if (linkedAccounts.fipData && Array.isArray(linkedAccounts.fipData)) {
+        for (const fip of linkedAccounts.fipData) {
+          if (fip.linkedAccounts && Array.isArray(fip.linkedAccounts)) {
+            const account = fip.linkedAccounts.find((acc: any) => acc.accountRefNumber || acc.fiDataId || acc.accountId);
+            if (account?.accountRefNumber) {
+              accountId = account.accountRefNumber;
+              break;
+            } else if (account?.fiDataId) {
+              accountId = account.fiDataId;
+              break;
+            } else if (account?.accountId) {
+              accountId = account.accountId;
+              break;
+            }
+          }
+        }
+      }
+      // Check for direct array structure
+      else if (Array.isArray(linkedAccounts)) {
+        const account = linkedAccounts.find((acc: any) => acc.accountRefNumber || acc.fiDataId || acc.accountId);
+        if (account?.accountRefNumber) {
+          accountId = account.accountRefNumber;
+        } else if (account?.fiDataId) {
+          accountId = account.fiDataId;
+        } else if (account?.accountId) {
+          accountId = account.accountId;
+        }
+      }
+      // Check for direct object with accountId
+      else if (linkedAccounts.accountRefNumber) {
+        accountId = linkedAccounts.accountRefNumber;
+      } else if (linkedAccounts.fiDataId) {
+        accountId = linkedAccounts.fiDataId;
+      } else if (linkedAccounts.accountId) {
+        accountId = linkedAccounts.accountId;
+      }
+    }
+    
+    if (!accountId) {
+      console.warn('No accountId found in linked accounts, using fallback');
+      return null;
+    }
+    
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/account-consents-latest',
       {
         uniqueIdentifier: '8956545791',
-        accountId: 'b986d95d-709e-45a7-8548-39814173ec9c',
+        accountId: accountId,
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching account consents:', error);
     return null;
@@ -316,7 +460,21 @@ export async function getTermDepositLinkedAccounts(): Promise<any> {
         uniqueIdentifier: '8956545791',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching term deposit linked accounts:', error);
     return null;
@@ -334,7 +492,21 @@ export async function getTermDepositUserDetails(): Promise<any> {
         uniqueIdentifier: '8956545791',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching term deposit user details:', error);
     return null;
@@ -343,18 +515,84 @@ export async function getTermDepositUserDetails(): Promise<any> {
 
 /**
  * Term Deposit - Get account statement
+ * Dynamically fetches accountId from linked accounts
  */
 export async function getTermDepositAccountStatement(): Promise<any> {
   try {
+    // First, get linked accounts to extract accountId
+    const linkedAccounts = await getTermDepositLinkedAccounts();
+    
+    // Extract accountId from linked accounts
+    let accountId = '';
+    
+    if (linkedAccounts) {
+      // Check for fipData structure
+      if (linkedAccounts.fipData && Array.isArray(linkedAccounts.fipData)) {
+        for (const fip of linkedAccounts.fipData) {
+          if (fip.linkedAccounts && Array.isArray(fip.linkedAccounts)) {
+            const account = fip.linkedAccounts.find((acc: any) => acc.accountRefNumber || acc.fiDataId || acc.accountId);
+            if (account?.accountRefNumber) {
+              accountId = account.accountRefNumber;
+              break;
+            } else if (account?.fiDataId) {
+              accountId = account.fiDataId;
+              break;
+            } else if (account?.accountId) {
+              accountId = account.accountId;
+              break;
+            }
+          }
+        }
+      }
+      // Check for direct array structure
+      else if (Array.isArray(linkedAccounts)) {
+        const account = linkedAccounts.find((acc: any) => acc.accountRefNumber || acc.fiDataId || acc.accountId);
+        if (account?.accountRefNumber) {
+          accountId = account.accountRefNumber;
+        } else if (account?.fiDataId) {
+          accountId = account.fiDataId;
+        } else if (account?.accountId) {
+          accountId = account.accountId;
+        }
+      }
+      // Check for direct object with accountId
+      else if (linkedAccounts.accountRefNumber) {
+        accountId = linkedAccounts.accountRefNumber;
+      } else if (linkedAccounts.fiDataId) {
+        accountId = linkedAccounts.fiDataId;
+      } else if (linkedAccounts.accountId) {
+        accountId = linkedAccounts.accountId;
+      }
+    }
+    
+    if (!accountId) {
+      console.warn('No accountId found in linked accounts, using fallback');
+      return null;
+    }
+    
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/term-deposit/user-account-statement',
       {
         uniqueIdentifier: '8956545791',
-        accountId: '037f5d5e-495b-484d-84f8-dba76a14d6b1',
-        dateRangeFrom: '2023-01-01',
+        accountId: accountId,
+        dateRangeFrom: '2020-01-01',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching term deposit account statement:', error);
     return null;
@@ -372,7 +610,21 @@ export async function getRecurringDepositLinkedAccounts(): Promise<any> {
         uniqueIdentifier: '8956545791',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching recurring deposit linked accounts:', error);
     return null;
@@ -387,10 +639,24 @@ export async function getRecurringDepositUserDetails(): Promise<any> {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/recurring-deposit/user-details',
       {
-        uniqueIdentifier: '9823972748',
+        uniqueIdentifier: '8956545791',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching recurring deposit user details:', error);
     return null;
@@ -399,19 +665,70 @@ export async function getRecurringDepositUserDetails(): Promise<any> {
 
 /**
  * Recurring Deposit - Get account statement
+ * Dynamically fetches accountId from linked accounts
  */
 export async function getRecurringDepositAccountStatement(): Promise<any> {
   try {
+    // First, get linked accounts to extract accountRefNumber
+    const linkedAccounts = await getRecurringDepositLinkedAccounts();
+    
+    // Extract accountRefNumber from linked accounts
+    let accountId = '';
+    
+    if (linkedAccounts) {
+      // Check for fipData structure
+      if (linkedAccounts.fipData && Array.isArray(linkedAccounts.fipData)) {
+        for (const fip of linkedAccounts.fipData) {
+          if (fip.linkedAccounts && Array.isArray(fip.linkedAccounts)) {
+            const account = fip.linkedAccounts.find((acc: any) => acc.accountRefNumber);
+            if (account?.accountRefNumber) {
+              accountId = account.accountRefNumber;
+              break;
+            }
+          }
+        }
+      }
+      // Check for direct array structure
+      else if (Array.isArray(linkedAccounts)) {
+        const account = linkedAccounts.find((acc: any) => acc.accountRefNumber);
+        if (account?.accountRefNumber) {
+          accountId = account.accountRefNumber;
+        }
+      }
+      // Check for direct object with accountRefNumber
+      else if (linkedAccounts.accountRefNumber) {
+        accountId = linkedAccounts.accountRefNumber;
+      }
+    }
+    
+    if (!accountId) {
+      console.warn('No accountRefNumber found in linked accounts, using fallback');
+      return null;
+    }
+    
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/recurring-deposit/user-account-statement',
       {
         uniqueIdentifier: '8956545791',
-        accountId: '4a81e8e8-928b-4b1f-b226-946f8dc3b1d9',
-        dateRangeFrom: '2020-01-01',
-        dateRangeTo: '2025-12-31',
+        accountId: accountId,
+        dateRangeFrom: '2024-01-01',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching recurring deposit account statement:', error);
     return null;
@@ -423,24 +740,29 @@ export async function getRecurringDepositAccountStatement(): Promise<any> {
  */
 export async function getMFUserLinkedAccounts(): Promise<any> {
   try {
-    const uniqueIdentifier = '8956545791';
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/mutual-fund/user-linked-accounts',
       {
-        uniqueIdentifier,
+        uniqueIdentifier: '8956545791',
         filterZeroValueAccounts: 'false',
         filterZeroValueHoldings: 'false',
       }
     );
-    const data = response.data || response;
     
-    // 💾 Persist to database
-    if (data) {
-      const result = await upsertMFHoldings(uniqueIdentifier, data);
-      console.log(`💾 MF Linked Accounts: Saved ${result.saved} to database`);
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
     }
     
-    return data;
+    return response || null;
   } catch (error) {
     console.error('Error fetching MF user linked accounts:', error);
     return null;
@@ -452,22 +774,29 @@ export async function getMFUserLinkedAccounts(): Promise<any> {
  */
 export async function getMFHoldingFolio(): Promise<any> {
   try {
-    const uniqueIdentifier = '8956545791';
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/mutual-fund/user-linked-accounts/holding-folio',
       {
-        uniqueIdentifier,
+        uniqueIdentifier: '8956545791',
+        filterZeroValueAccounts: 'true',
+        filterZeroValueHoldings: 'true',
       }
     );
-    const data = response.data || response;
     
-    // 💾 Persist to database
-    if (data) {
-      const result = await upsertMFHoldings(uniqueIdentifier, data);
-      console.log(`💾 MF Holdings: Saved ${result.saved} to database`);
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
     }
     
-    return data;
+    return response || null;
   } catch (error) {
     console.error('Error fetching MF holding folio:', error);
     return null;
@@ -482,10 +811,24 @@ export async function getMFUserDetails(): Promise<any> {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/mutual-fund/user-details',
       {
-        uniqueIdentifier: '9167073512',
+        uniqueIdentifier: '8956545791',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching MF user details:', error);
     return null;
@@ -497,13 +840,63 @@ export async function getMFUserDetails(): Promise<any> {
  */
 export async function getMFAccountStatement(): Promise<any> {
   try {
+    // First, get the MF account ID from linked accounts
+    const linkedAccountsResponse = await makeAuthenticatedRequest<any>(
+      '/pfm/api/v2/mutual-fund/user-linked-accounts',
+      {
+        uniqueIdentifier: '8956545791',
+        filterZeroValueAccounts: 'false',
+        filterZeroValueHoldings: 'false',
+      }
+    );
+    
+    let accountId = null;
+    
+    // Handle different response structures
+    let fipData = null;
+    if (linkedAccountsResponse?.fipData && Array.isArray(linkedAccountsResponse.fipData) && linkedAccountsResponse.fipData.length > 0) {
+      fipData = linkedAccountsResponse.fipData;
+    } else if (linkedAccountsResponse?.data?.fipData && Array.isArray(linkedAccountsResponse.data.fipData) && linkedAccountsResponse.data.fipData.length > 0) {
+      fipData = linkedAccountsResponse.data.fipData;
+    }
+    
+    // Get accountId from fipData[0].linkedAccounts[0].accountRefNumber
+    if (fipData && fipData[0]?.linkedAccounts && Array.isArray(fipData[0].linkedAccounts) && fipData[0].linkedAccounts.length > 0) {
+      const firstAccount = fipData[0].linkedAccounts[0];
+      accountId = firstAccount.accountRefNumber || firstAccount.fiDataId || firstAccount.accountId;
+    }
+    
+    if (!accountId) {
+      console.error('❌ No accountId found from MF linked accounts');
+      return null;
+    }
+    
+    console.log('✅ Using accountId for MF account statement:', accountId);
+    
+    // Now fetch the account statement with the accountId
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/mutual-fund/user-account-statement',
       {
-        uniqueIdentifier: '7008281184',
+        uniqueIdentifier: '8956545791',
+        accountId: accountId,
+        dateRangeFrom: '2025-01-01',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching MF account statement:', error);
     return null;
@@ -518,10 +911,28 @@ export async function getMFInsights(): Promise<any> {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/mutual-fund/insights',
       {
-        uniqueIdentifier: '9823972748',
+        uniqueIdentifier: '8956545791',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      // If response has success and data
+      if (response.success && response.data) {
+        return response.data;
+      }
+      // If response itself is the data
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      // If response is directly the data object
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    // If we get here, try to return the response anyway
+    return response || null;
   } catch (error) {
     console.error('Error fetching MF insights:', error);
     return null;
@@ -536,12 +947,30 @@ export async function getMFAnalysis(): Promise<any> {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/mutual-fund/analysis',
       {
-        uniqueIdentifier: '9823972748',
+        uniqueIdentifier: '8956545791',
         filterZeroValueAccounts: 'false',
         filterZeroValueHoldings: 'false',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      // If response has success and data
+      if (response.success && response.data) {
+        return response.data;
+      }
+      // If response itself is the data
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      // If response is directly the data object
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    // If we get here, try to return the response anyway
+    return response || null;
   } catch (error) {
     console.error('Error fetching MF analysis:', error);
     return null;
@@ -596,24 +1025,29 @@ export async function getMFCConsentApprove(
  */
 export async function getETFUserLinkedAccounts(): Promise<any> {
   try {
-    const uniqueIdentifier = '9823972748';
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/etf/user-linked-accounts',
       {
-        uniqueIdentifier,
+        uniqueIdentifier: '8956545791',
         filterZeroValueAccounts: 'false',
         filterZeroValueHoldings: 'false',
       }
     );
-    const data = response.data || response;
     
-    // 💾 Persist to database
-    if (data) {
-      const result = await upsertETFHoldings(uniqueIdentifier, data);
-      console.log(`💾 ETF Holdings: Saved ${result.saved} to database`);
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
     }
     
-    return data;
+    return response || null;
   } catch (error) {
     console.error('Error fetching ETF user linked accounts:', error);
     return null;
@@ -628,10 +1062,24 @@ export async function getETFInsights(): Promise<any> {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/etf/insights',
       {
-        uniqueIdentifier: '9823972748',
+        uniqueIdentifier: '8956545791',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching ETF insights:', error);
     return null;
@@ -643,26 +1091,50 @@ export async function getETFInsights(): Promise<any> {
  */
 export async function getEquitiesUserLinkedAccounts(): Promise<any> {
   try {
-    const uniqueIdentifier = '9823972748';
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/equities/user-linked-accounts',
       {
-        uniqueIdentifier,
+        uniqueIdentifier: '8956545791',
         filterZeroValueAccounts: 'false',
         filterZeroValueHoldings: 'false',
       }
     );
-    const data = response.data || response;
     
-    // 💾 Persist to database
-    if (data) {
-      const result = await upsertEquityHoldings(uniqueIdentifier, data);
-      console.log(`💾 Equity Holdings: Saved ${result.saved} to database`);
+    console.log('📊 Equities User Linked Accounts API Response:', JSON.stringify(response, null, 2));
+    console.log('📊 Response type:', typeof response);
+    console.log('📊 Is array:', Array.isArray(response));
+    console.log('📊 Response keys:', response && typeof response === 'object' && !Array.isArray(response) ? Object.keys(response) : 'N/A');
+    console.log('📊 Has fipData:', response?.fipData ? `Yes (${Array.isArray(response.fipData) ? `Array[${response.fipData.length}]` : typeof response.fipData})` : 'No');
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      // If response has fipData, totalFiData, etc. (the structure you showed), return it directly
+      if (response.fipData || response.totalFiData !== undefined || response.currentValue !== undefined) {
+        console.log('✅ Returning response with fipData structure');
+        return response;
+      }
+      
+      if (response.success && response.data) {
+        console.log('✅ Returning response.data');
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        console.log('✅ Returning response.data (no success flag)');
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        console.log('✅ Returning full response object');
+        return response;
+      }
     }
     
-    return data;
+    console.log('⚠️ Returning response or null:', response ? 'has response' : 'null');
+    return response || null;
   } catch (error) {
-    console.error('Error fetching equities user linked accounts:', error);
+    console.error('❌ Error fetching equities user linked accounts:', error);
+    if (error instanceof Error) {
+      console.error('❌ Error message:', error.message);
+    }
     return null;
   }
 }
@@ -672,24 +1144,29 @@ export async function getEquitiesUserLinkedAccounts(): Promise<any> {
  */
 export async function getEquitiesHoldingBroker(): Promise<any> {
   try {
-    const uniqueIdentifier = '9823972748';
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/equities/user-linked-accounts/holding-broker',
       {
-        uniqueIdentifier,
+        uniqueIdentifier: '8956545791',
         filterZeroValueAccounts: 'false',
         filterZeroValueHoldings: 'false',
       }
     );
-    const data = response.data || response;
     
-    // 💾 Persist to database
-    if (data) {
-      const result = await upsertEquityHoldings(uniqueIdentifier, data);
-      console.log(`💾 Equity Holding Broker: Saved ${result.saved} to database`);
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
     }
     
-    return data;
+    return response || null;
   } catch (error) {
     console.error('Error fetching equities holding broker:', error);
     return null;
@@ -704,14 +1181,34 @@ export async function getEquitiesDematHolding(): Promise<any> {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/equities/user-linked-accounts/demat-holding',
       {
-        uniqueIdentifier: '9823972748',
+        uniqueIdentifier: '8956545791',
         filterZeroValueAccounts: 'false',
         filterZeroValueHoldings: 'false',
       }
     );
-    return response.data || response;
+    
+    console.log('📊 Equities Demat Holding API Response:', JSON.stringify(response, null, 2));
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        console.log('✅ Returning response.data');
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        console.log('✅ Returning response.data (no success flag)');
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        console.log('✅ Returning full response object');
+        return response;
+      }
+    }
+    
+    console.log('⚠️ Returning response or null:', response ? 'has response' : 'null');
+    return response || null;
   } catch (error) {
-    console.error('Error fetching equities demat holding:', error);
+    console.error('❌ Error fetching equities demat holding:', error);
     return null;
   }
 }
@@ -723,11 +1220,75 @@ export async function getEquitiesBrokerHolding(): Promise<any> {
   try {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/equities/user-linked-accounts/broker-holding',
-      {}
+      {
+        uniqueIdentifier: '8956545791',
+        filterZeroValueAccounts: 'false',
+        filterZeroValueHoldings: 'false',
+      }
     );
-    return response.data || response;
+    
+    console.log('📊 Equities Broker Holding API Response:', JSON.stringify(response, null, 2));
+    console.log('📊 Response type:', typeof response);
+    console.log('📊 Is array:', Array.isArray(response));
+    console.log('📊 Response keys:', response && typeof response === 'object' && !Array.isArray(response) ? Object.keys(response) : 'N/A');
+    console.log('📊 Has brokerData:', response?.brokerData ? `Yes (${Array.isArray(response.brokerData) ? 'Array' : typeof response.brokerData})` : 'No');
+    console.log('📊 Has brokers:', response?.brokers ? `Yes (${Array.isArray(response.brokers) ? 'Array' : typeof response.brokers})` : 'No');
+    console.log('📊 Has demat:', response?.demat ? `Yes (${Array.isArray(response.demat) ? 'Array' : typeof response.demat})` : 'No');
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      // If it's an array, return it directly
+      if (Array.isArray(response)) {
+        console.log('✅ Returning array response directly');
+        return response;
+      }
+      
+      // Check for nested data structures
+      if (response.brokerData && Array.isArray(response.brokerData)) {
+        console.log('✅ Returning response.brokerData');
+        return response.brokerData;
+      }
+      
+      if (response.fipData && Array.isArray(response.fipData)) {
+        console.log('✅ Returning response.fipData');
+        return response.fipData;
+      }
+      
+      if (response.data) {
+        // If data is an array, return it
+        if (Array.isArray(response.data)) {
+          console.log('✅ Returning response.data (array)');
+          return response.data;
+        }
+        // If data is an object, check for nested arrays
+        if (response.data.brokerData && Array.isArray(response.data.brokerData)) {
+          console.log('✅ Returning response.data.brokerData');
+          return response.data.brokerData;
+        }
+        if (response.data.fipData && Array.isArray(response.data.fipData)) {
+          console.log('✅ Returning response.data.fipData');
+          return response.data.fipData;
+        }
+        console.log('✅ Returning response.data');
+        return response.data;
+      }
+      
+      if (response.success && response.data) {
+        console.log('✅ Returning response.data (with success flag)');
+        return response.data;
+      }
+      
+      // Return the full response if it's an object with data
+      if (!response.success && !response.message) {
+        console.log('✅ Returning full response object');
+        return response;
+      }
+    }
+    
+    console.log('⚠️ Returning response or null:', response ? 'has response' : 'null');
+    return response || null;
   } catch (error) {
-    console.error('Error fetching equities broker holding:', error);
+    console.error('❌ Error fetching equities broker holding:', error);
     return null;
   }
 }
@@ -740,10 +1301,24 @@ export async function getEquitiesUserDetails(): Promise<any> {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/equities/user-details',
       {
-        uniqueIdentifier: '9167073512',
+        uniqueIdentifier: '8956545791',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching equities user details:', error);
     return null;
@@ -758,14 +1333,22 @@ export async function getEquitiesETFsDematHolding(): Promise<any> {
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/equities-and-etfs/user-linked-accounts/demat-holding',
       {
-        uniqueIdentifier: '9823972748',
+        uniqueIdentifier: '8956545791',
         filterZeroValueAccounts: 'false',
         filterZeroValueHoldings: 'false',
       }
     );
-    return response.data || response;
+    
+    // Based on Postman response structure:
+    // Response is an object with: totalFiData, totalFiDataToBeFetched, totalEquityDematAccounts,
+    // totalETFDematAccounts, currentValue, demat (array), prevDetails
+    if (response && typeof response === 'object') {
+      // Return the full response object (it contains demat array and other metadata)
+      return response;
+    }
+    
+    return response || null;
   } catch (error) {
-    console.error('Error fetching equities and ETFs demat holding:', error);
     return null;
   }
 }
@@ -959,15 +1542,50 @@ export async function getDepositInsights(): Promise<any> {
  */
 export async function getETFAccountStatement(): Promise<any> {
   try {
+    // First, get the ETF account ID from linked accounts
+    const linkedAccountsResponse = await makeAuthenticatedRequest<any>(
+      '/pfm/api/v2/etf/user-linked-accounts',
+      {
+        uniqueIdentifier: '8956545791',
+        filterZeroValueAccounts: 'false',
+        filterZeroValueHoldings: 'false',
+      }
+    );
+    
+    let accountId = null;
+    const linkedAccounts = linkedAccountsResponse?.fipData?.[0]?.linkedAccounts || linkedAccountsResponse?.data?.fipData?.[0]?.linkedAccounts || [];
+    if (linkedAccounts.length > 0) {
+      accountId = linkedAccounts[0].fiDataId || linkedAccounts[0].accountId || linkedAccounts[0].accountRefNumber;
+    }
+    
+    // If no accountId found, use the provided one as fallback
+    if (!accountId) {
+      accountId = 'eff4c543-b06f-4d77-8b89-049898c725a8';
+    }
+    
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/etf/user-account-statement',
       {
         uniqueIdentifier: '8956545791',
-        accountId: '60e38f9b-50da-46b2-bb43-3ddb5b9e63c1',
-        dateRangeFrom: '2024-01-01',
+        accountId: accountId,
+        dateRangeFrom: '2020-01-01',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching ETF account statement:', error);
     return null;
@@ -979,15 +1597,63 @@ export async function getETFAccountStatement(): Promise<any> {
  */
 export async function getEquitiesAccountStatement(): Promise<any> {
   try {
+    // First, get the Equities account ID from linked accounts
+    const linkedAccountsResponse = await makeAuthenticatedRequest<any>(
+      '/pfm/api/v2/equities/user-linked-accounts',
+      {
+        uniqueIdentifier: '8956545791',
+        filterZeroValueAccounts: 'false',
+        filterZeroValueHoldings: 'false',
+      }
+    );
+    
+    let accountId = null;
+    
+    // Handle different response structures
+    let fipData = null;
+    if (linkedAccountsResponse?.fipData && Array.isArray(linkedAccountsResponse.fipData) && linkedAccountsResponse.fipData.length > 0) {
+      fipData = linkedAccountsResponse.fipData;
+    } else if (linkedAccountsResponse?.data?.fipData && Array.isArray(linkedAccountsResponse.data.fipData) && linkedAccountsResponse.data.fipData.length > 0) {
+      fipData = linkedAccountsResponse.data.fipData;
+    }
+    
+    // Get accountId from fipData[0].linkedAccounts[0].accountRefNumber or fiDataId
+    if (fipData && fipData[0]?.linkedAccounts && Array.isArray(fipData[0].linkedAccounts) && fipData[0].linkedAccounts.length > 0) {
+      const firstAccount = fipData[0].linkedAccounts[0];
+      accountId = firstAccount.accountRefNumber || firstAccount.fiDataId || firstAccount.accountId;
+    }
+    
+    if (!accountId) {
+      console.error('❌ No accountId found from Equities linked accounts');
+      return null;
+    }
+    
+    console.log('✅ Using accountId for Equities account statement:', accountId);
+    
+    // Now fetch the account statement
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/equities/user-account-statement',
       {
-        uniqueIdentifier: '9823972748',
-        accountId: '60e38f9b-50da-46b2-bb43-3ddb5b9e63c1',
-        dateRangeFrom: '2024-01-01',
+        uniqueIdentifier: '8956545791',
+        accountId: accountId,
+        dateRangeFrom: '2020-01-01',
       }
     );
-    return response.data || response;
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        return response;
+      }
+    }
+    
+    return response || null;
   } catch (error) {
     console.error('Error fetching equities account statement:', error);
     return null;
@@ -999,17 +1665,75 @@ export async function getEquitiesAccountStatement(): Promise<any> {
  */
 export async function getEquitiesETFsAccountStatement(): Promise<any> {
   try {
+    // First, get the account ID from linked accounts
+    const linkedAccountsResponse = await makeAuthenticatedRequest<any>(
+      '/pfm/api/v2/equities/user-linked-accounts',
+      {
+        uniqueIdentifier: '8956545791',
+        filterZeroValueAccounts: 'false',
+        filterZeroValueHoldings: 'false',
+      }
+    );
+    
+    let accountId = null;
+    
+    // Handle different response structures
+    let fipData = null;
+    if (linkedAccountsResponse?.fipData && Array.isArray(linkedAccountsResponse.fipData) && linkedAccountsResponse.fipData.length > 0) {
+      fipData = linkedAccountsResponse.fipData;
+    } else if (linkedAccountsResponse?.data?.fipData && Array.isArray(linkedAccountsResponse.data.fipData) && linkedAccountsResponse.data.fipData.length > 0) {
+      fipData = linkedAccountsResponse.data.fipData;
+    }
+    
+    // Get accountId from fipData[0].linkedAccounts[0].accountRefNumber or fiDataId
+    if (fipData && fipData[0]?.linkedAccounts && Array.isArray(fipData[0].linkedAccounts) && fipData[0].linkedAccounts.length > 0) {
+      const firstAccount = fipData[0].linkedAccounts[0];
+      accountId = firstAccount.accountRefNumber || firstAccount.fiDataId || firstAccount.accountId;
+    }
+    
+    if (!accountId) {
+      console.error('❌ No accountId found from Equities linked accounts for ETF statement');
+      return null;
+    }
+    
+    console.log('✅ Using accountId for Equities & ETFs account statement:', accountId);
+    
+    // Now fetch the account statement
     const response = await makeAuthenticatedRequest<any>(
       '/pfm/api/v2/equities-and-etfs/user-account-statement',
       {
-        uniqueIdentifier: '9823972748',
-        accountId: '60e38f9b-50da-46b2-bb43-3ddb5b9e63c1',
-        dateRangeFrom: '2024-01-01',
+        uniqueIdentifier: '8956545791',
+        accountId: accountId,
+        dateRangeFrom: '2020-01-01',
       }
     );
-    return response.data || response;
+    
+    console.log('📊 Equities & ETFs Account Statement API Response:', JSON.stringify(response, null, 2));
+    
+    // Handle different response structures
+    if (response && typeof response === 'object') {
+      if (Array.isArray(response)) {
+        console.log('✅ Returning array response directly');
+        return response;
+      }
+      if (response.success && response.data) {
+        console.log('✅ Returning response.data');
+        return response.data;
+      }
+      if (response.data && !response.success) {
+        console.log('✅ Returning response.data (no success flag)');
+        return response.data;
+      }
+      if (!response.success && !response.message) {
+        console.log('✅ Returning full response object');
+        return response;
+      }
+    }
+    
+    console.log('⚠️ Returning response or null:', response ? 'has response' : 'null');
+    return response || null;
   } catch (error) {
-    console.error('Error fetching equities and ETFs account statement:', error);
+    console.error('❌ Error fetching equities and ETFs account statement:', error);
     return null;
   }
 }

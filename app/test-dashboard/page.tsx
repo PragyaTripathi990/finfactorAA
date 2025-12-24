@@ -1,346 +1,785 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
+import toast from 'react-hot-toast';
+import {
+  getUserDetails,
+  getMutualFunds,
+  getFIRequestUser,
+  getFIRequestAccount,
+  getFIPs,
+  getBrokers,
+  getNPSLinkedAccounts,
+  getAccountConsents,
+  getTermDepositLinkedAccounts,
+  getTermDepositUserDetails,
+  getTermDepositAccountStatement,
+  getRecurringDepositLinkedAccounts,
+  getRecurringDepositUserDetails,
+  getRecurringDepositAccountStatement,
+  getMFUserLinkedAccounts,
+  getMFHoldingFolio,
+  getMFUserDetails,
+  getMFAccountStatement,
+  getMFInsights,
+  getMFAnalysis,
+  getMFCConsentRequest,
+  getMFCConsentApprove,
+  getETFUserLinkedAccounts,
+  getETFInsights,
+  getETFAccountStatement,
+  getEquitiesUserLinkedAccounts,
+  getEquitiesHoldingBroker,
+  getEquitiesDematHolding,
+  getEquitiesBrokerHolding,
+  getEquitiesUserDetails,
+  getEquitiesAccountStatement,
+  getEquitiesETFsDematHolding,
+  getEquitiesETFsAccountStatement,
+  getDepositUserDetails,
+  getDepositUserLinkedAccounts,
+  getDepositAccountStatement,
+  getDepositAccountStatementDownload,
+  getDepositInsights,
+  delinkAccount,
+  initiateConsentPlus,
+  submitConsentV1,
+} from '../actions';
+import FinancialDataDisplay from '../components/FinancialDataDisplay';
+import DataTable from '../components/DataTable';
+import Sidebar from '../components/Sidebar';
+import NPSLinkedAccountsDisplay from '../components/NPSLinkedAccountsDisplay';
+import MutualFundsDisplay from '../components/MutualFundsDisplay';
+import FIPsDisplay from '../components/FIPsDisplay';
+import DepositLinkedAccountsDisplay from '../components/DepositLinkedAccountsDisplay';
+import UserDetailsDisplay from '../components/UserDetailsDisplay';
+import AccountStatementDisplay from '../components/AccountStatementDisplay';
+import DepositInsightsDisplay from '../components/DepositInsightsDisplay';
+import BrokersDisplay from '../components/BrokersDisplay';
+import MFLinkedAccountsDisplay from '../components/MFLinkedAccountsDisplay';
+import MFUserDetailsDisplay from '../components/MFUserDetailsDisplay';
+import MFHoldingFolioDisplay from '../components/MFHoldingFolioDisplay';
+import MFInsightsDisplay from '../components/MFInsightsDisplay';
+import MFAnalysisDisplay from '../components/MFAnalysisDisplay';
+import MFAccountStatementDisplay from '../components/MFAccountStatementDisplay';
+import ETFLinkedAccountsDisplay from '../components/ETFLinkedAccountsDisplay';
+import ETFInsightsDisplay from '../components/ETFInsightsDisplay';
+import ETFAccountStatementDisplay from '../components/ETFAccountStatementDisplay';
+import EquitiesLinkedAccountsDisplay from '../components/EquitiesLinkedAccountsDisplay';
+import EquitiesHoldingBrokerDisplay from '../components/EquitiesHoldingBrokerDisplay';
+import EquitiesDematHoldingDisplay from '../components/EquitiesDematHoldingDisplay';
+import EquitiesBrokerHoldingDisplay from '../components/EquitiesBrokerHoldingDisplay';
+import EquitiesUserDetailsDisplay from '../components/EquitiesUserDetailsDisplay';
+import EquitiesAccountStatementDisplay from '../components/EquitiesAccountStatementDisplay';
+import EquitiesETFsDematHoldingDisplay from '../components/EquitiesETFsDematHoldingDisplay';
+import RDLinkedAccountsDisplay from '../components/RDLinkedAccountsDisplay';
+import TDLinkedAccountsDisplay from '../components/TDLinkedAccountsDisplay';
+import FIRequestDisplay from '../components/FIRequestDisplay';
+import AccountConsentsDisplay from '../components/AccountConsentsDisplay';
+import ConsentResponseDisplay from '../components/ConsentResponseDisplay';
+import { camelToTitleCase, formatValue, flattenObject } from '@/lib/formatters';
 
-interface TestResult {
-  name: string;
-  status: 'PASS' | 'FAIL' | 'RUNNING';
-  time?: number;
-  data?: any;
-  error?: string;
-  step?: number;
-  layer?: string;
-}
+type TabId = 'portfolio' | 'mutualfunds' | 'termdeposit' | 'rddeposit' | 'mfdetails' | 'etf' | 'equities' | 'deposit' | 'firequest' | 'fips' | 'brokers' | 'nps' | 'consents';
+type SubTabId = string;
 
-interface LayerResult {
-  layer: string;
-  layerName: string;
-  timestamp: string;
-  totalTime: number;
-  summary: {
-    passed: number;
-    total: number;
-    status: string;
-  };
-  tests: TestResult[];
-  error?: string;
-}
-
-export default function TestDashboard() {
-  const [results, setResults] = useState<Record<string, LayerResult | null>>({
-    A: null,
-    B: null,
-    C: null,
-    FULL: null,
+export default function TestDashboardPage() {
+  const [activeTab, setActiveTab] = useState<TabId>('portfolio');
+  const [activeSubTab, setActiveSubTab] = useState<Record<TabId, SubTabId>>({
+    portfolio: '',
+    mutualfunds: '',
+    termdeposit: 'linked',
+    rddeposit: 'linked',
+    mfdetails: 'linked',
+    etf: 'linked',
+    equities: 'linked',
+    deposit: 'linked',
+    firequest: '',
+    fips: '',
+    brokers: '',
+    nps: '',
+    consents: '',
   });
-  const [loading, setLoading] = useState<Record<string, boolean>>({
-    A: false,
-    B: false,
-    C: false,
-    FULL: false,
-    ALL: false,
-    CLEANUP: false,
-  });
-  const [cleanupStatus, setCleanupStatus] = useState<string | null>(null);
 
-  const runTest = async (layer: string, endpoint: string) => {
-    setLoading(prev => ({ ...prev, [layer]: true }));
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [data, setData] = useState<Record<string, any>>({});
+  
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [consentV1Data, setConsentV1Data] = useState<any>(null);
+
+  useEffect(() => {
+    loadUserDetails();
+  }, []);
+
+  const loadData = async (key: string, loader: () => Promise<any>) => {
+    setLoading(prev => ({ ...prev, [key]: true }));
     try {
-      const response = await fetch(endpoint);
-      const data = await response.json();
-      setResults(prev => ({ ...prev, [layer]: data }));
+      const result = await loader();
+      setData(prev => ({ ...prev, [key]: result }));
+      if (!result) toast.error(`No data available for ${key}`);
     } catch (error) {
-      setResults(prev => ({
-        ...prev,
-        [layer]: {
-          layer,
-          layerName: `Layer ${layer}`,
-          timestamp: new Date().toISOString(),
-          totalTime: 0,
-          summary: { passed: 0, total: 1, status: 'FAIL' },
-          tests: [],
-          error: error instanceof Error ? error.message : 'Unknown error',
-        },
-      }));
+      toast.error(`Error loading ${key}`);
     } finally {
-      setLoading(prev => ({ ...prev, [layer]: false }));
+      setLoading(prev => ({ ...prev, [key]: false }));
     }
   };
 
-  const runAllTests = async () => {
-    setLoading(prev => ({ ...prev, ALL: true }));
-    await runTest('A', '/api/test/layer-a');
-    await runTest('B', '/api/test/layer-b');
-    await runTest('C', '/api/test/layer-c');
-    await runTest('FULL', '/api/test/full-flow');
-    setLoading(prev => ({ ...prev, ALL: false }));
-  };
+  const loadUserDetails = () => loadData('userDetails', getUserDetails);
 
-  const cleanupAll = async () => {
-    setLoading(prev => ({ ...prev, CLEANUP: true }));
-    setCleanupStatus('Cleaning...');
+  useEffect(() => {
+    const key = `${activeTab}-${activeSubTab[activeTab]}`;
+    if (data[key] !== undefined || loading[key]) return;
+
+    switch (activeTab) {
+      case 'mutualfunds':
+        if (!data.mutualfunds) loadData('mutualfunds', getMutualFunds);
+        break;
+      case 'termdeposit':
+        switch (activeSubTab.termdeposit) {
+          case 'linked':
+            loadData('td-linked', getTermDepositLinkedAccounts);
+            break;
+          case 'details':
+            loadData('td-details', getTermDepositUserDetails);
+            break;
+          case 'statement':
+            loadData('td-statement', getTermDepositAccountStatement);
+            break;
+        }
+        break;
+      case 'rddeposit':
+        switch (activeSubTab.rddeposit) {
+          case 'linked':
+            loadData('rd-linked', getRecurringDepositLinkedAccounts);
+            break;
+          case 'details':
+            loadData('rd-details', getRecurringDepositUserDetails);
+            break;
+          case 'statement':
+            loadData('rd-statement', getRecurringDepositAccountStatement);
+            break;
+        }
+        break;
+      case 'mfdetails':
+        switch (activeSubTab.mfdetails) {
+          case 'linked':
+            loadData('mf-linked', getMFUserLinkedAccounts);
+            break;
+          case 'folio':
+            loadData('mf-folio', getMFHoldingFolio);
+            break;
+          case 'details':
+            loadData('mf-details', getMFUserDetails);
+            break;
+          case 'statement':
+            loadData('mf-statement', getMFAccountStatement);
+            break;
+          case 'insights':
+            loadData('mf-insights', getMFInsights);
+            break;
+          case 'analysis':
+            loadData('mf-analysis', getMFAnalysis);
+            break;
+          case 'consent':
+            loadData('mf-consent', getMFCConsentRequest);
+            break;
+          case 'approve':
+            loadData('mf-approve', getMFCConsentApprove);
+            break;
+        }
+        break;
+      case 'etf':
+        switch (activeSubTab.etf) {
+          case 'linked':
+            loadData('etf-linked', getETFUserLinkedAccounts);
+            break;
+          case 'insights':
+            loadData('etf-insights', getETFInsights);
+            break;
+          case 'statement':
+            loadData('etf-statement', getETFAccountStatement);
+            break;
+        }
+        break;
+      case 'equities':
+        switch (activeSubTab.equities) {
+          case 'linked':
+            loadData('eq-linked', getEquitiesUserLinkedAccounts);
+            break;
+          case 'holding-broker':
+            loadData('eq-holding-broker', getEquitiesHoldingBroker);
+            break;
+          case 'demat':
+            loadData('eq-demat', getEquitiesDematHolding);
+            break;
+          case 'broker':
+            loadData('eq-broker', getEquitiesBrokerHolding);
+            break;
+          case 'details':
+            loadData('eq-details', getEquitiesUserDetails);
+            break;
+          case 'combined':
+            loadData('eq-etf-combined', getEquitiesETFsDematHolding);
+            break;
+          case 'statement':
+            loadData('eq-statement', getEquitiesAccountStatement);
+            break;
+          case 'etf-statement':
+            loadData('eq-etf-statement', getEquitiesETFsAccountStatement);
+            break;
+        }
+        break;
+      case 'deposit':
+        switch (activeSubTab.deposit) {
+          case 'linked':
+            loadData('dep-linked', getDepositUserLinkedAccounts);
+            break;
+          case 'details':
+            loadData('dep-details', getDepositUserDetails);
+            break;
+          case 'statement':
+            loadData('dep-statement', getDepositAccountStatement);
+            break;
+          case 'insights':
+            loadData('dep-insights', getDepositInsights);
+            break;
+        }
+        break;
+      case 'firequest':
+        if (!data.firequest) {
+          Promise.all([
+            loadData('fi-user', getFIRequestUser),
+            loadData('fi-account', getFIRequestAccount),
+          ]);
+        }
+        break;
+      case 'fips':
+        if (!data.fips) loadData('fips', getFIPs);
+        break;
+      case 'brokers':
+        if (!data.brokers) loadData('brokers', getBrokers);
+        break;
+      case 'nps':
+        if (!data.nps) loadData('nps', getNPSLinkedAccounts);
+        break;
+      case 'consents':
+        if (!data.consents) loadData('consents', getAccountConsents);
+        break;
+    }
+  }, [activeTab, activeSubTab]);
+
+  const handleDelinkAccount = async () => {
+    setActionLoading('delink');
     try {
-      await fetch('/api/test/layer-a', { method: 'DELETE' });
-      await fetch('/api/test/layer-b', { method: 'DELETE' });
-      await fetch('/api/test/layer-c', { method: 'DELETE' });
-      await fetch('/api/test/full-flow', { method: 'DELETE' });
-      setCleanupStatus('✅ All test data cleaned!');
-      setResults({ A: null, B: null, C: null, FULL: null });
+      const result = await delinkAccount();
+      if (result.success) {
+        toast.success('Account delinked successfully!');
+        loadUserDetails();
+      } else {
+        toast.error(result.message || 'Failed to delink account');
+      }
     } catch (error) {
-      setCleanupStatus('❌ Cleanup failed');
+      toast.error(error instanceof Error ? error.message : 'Error delinking account');
     } finally {
-      setLoading(prev => ({ ...prev, CLEANUP: false }));
-      setTimeout(() => setCleanupStatus(null), 3000);
+      setActionLoading(null);
     }
   };
 
-  const layers = [
-    { id: 'A', name: 'Layer A', subtitle: 'Flow & Control', endpoint: '/api/test/layer-a', color: 'from-violet-500 to-purple-600' },
-    { id: 'B', name: 'Layer B', subtitle: 'Financial Data', endpoint: '/api/test/layer-b', color: 'from-blue-500 to-cyan-600' },
-    { id: 'C', name: 'Layer C', subtitle: 'State & Holdings', endpoint: '/api/test/layer-c', color: 'from-emerald-500 to-teal-600' },
-    { id: 'FULL', name: 'Full Flow', subtitle: 'A → B → C', endpoint: '/api/test/full-flow', color: 'from-amber-500 to-orange-600' },
+  const handleConnectBank = async () => {
+    setActionLoading('connect');
+    try {
+      const url = await initiateConsentPlus();
+      toast.success('Redirecting to bank connection...');
+      setTimeout(() => {
+        window.location.href = url;
+      }, 500);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to initiate consent');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDirectConsent = async () => {
+    setActionLoading('consent');
+    setConsentV1Data(null);
+    try {
+      const result = await submitConsentV1();
+      setConsentV1Data(result);
+      toast.success('Consent submitted successfully!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to submit consent');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Prepare sidebar items with sub-items
+  const sidebarItems = [
+    { id: 'portfolio', label: 'Portfolio', icon: '💼' },
+    {
+      id: 'deposit',
+      label: 'Deposits',
+      icon: '🏦',
+      subItems: [
+        { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
+        { id: 'details', label: 'User Details', icon: '👤' },
+        { id: 'statement', label: 'Statement', icon: '📄' },
+        { id: 'insights', label: 'Insights', icon: '💡' },
+      ],
+    },
+    { id: 'mutualfunds', label: 'MF List', icon: '🎯' },
+    {
+      id: 'mfdetails',
+      label: 'MF Details',
+      icon: '📊',
+      subItems: [
+        { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
+        { id: 'folio', label: 'Holding Folio', icon: '📁' },
+        { id: 'details', label: 'User Details', icon: '👤' },
+        { id: 'statement', label: 'Statement', icon: '📄' },
+        { id: 'insights', label: 'Insights', icon: '💡' },
+        { id: 'analysis', label: 'Analysis', icon: '📈' },
+        { id: 'consent', label: 'MFC Consent', icon: '✍️' },
+        { id: 'approve', label: 'Approve', icon: '✅' },
+      ],
+    },
+    {
+      id: 'equities',
+      label: 'Equities',
+      icon: '📈',
+      subItems: [
+        { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
+        { id: 'holding-broker', label: 'Holding Broker', icon: '🏢' },
+        { id: 'demat', label: 'Demat Holding', icon: '📦' },
+        { id: 'broker', label: 'Broker Holding', icon: '💼' },
+        { id: 'details', label: 'User Details', icon: '👤' },
+        { id: 'combined', label: 'Equities + ETF', icon: '🔀' },
+        { id: 'statement', label: 'Statement', icon: '📄' },
+        { id: 'etf-statement', label: 'Equities+ETF Statement', icon: '📋' },
+      ],
+    },
+    {
+      id: 'etf',
+      label: 'ETF',
+      icon: '💎',
+      subItems: [
+        { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
+        { id: 'insights', label: 'Insights', icon: '💡' },
+        { id: 'statement', label: 'Statement', icon: '📄' },
+      ],
+    },
+    {
+      id: 'termdeposit',
+      label: 'Term Deposit',
+      icon: '💰',
+      subItems: [
+        { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
+        { id: 'details', label: 'User Details', icon: '👤' },
+        { id: 'statement', label: 'Statement', icon: '📄' },
+      ],
+    },
+    {
+      id: 'rddeposit',
+      label: 'RD',
+      icon: '📈',
+      subItems: [
+        { id: 'linked', label: 'Linked Accounts', icon: '🔗' },
+        { id: 'details', label: 'User Details', icon: '👤' },
+        { id: 'statement', label: 'Statement', icon: '📄' },
+      ],
+    },
+    { id: 'firequest', label: 'FI Requests', icon: '📋' },
+    { id: 'fips', label: 'FIPs', icon: '🏢' },
+    { id: 'brokers', label: 'Brokers', icon: '💹' },
+    { id: 'nps', label: 'NPS', icon: '🛡️' },
+    { id: 'consents', label: 'Consents', icon: '✅' },
   ];
 
-  const totalPassed = Object.values(results).reduce((sum, r) => sum + (r?.summary?.passed || 0), 0);
-  const totalTests = Object.values(results).reduce((sum, r) => sum + (r?.summary?.total || 0), 0);
+
+  const renderContent = () => {
+    const currentLoading = loading[`${activeTab}-${activeSubTab[activeTab]}`] || loading[activeTab];
+
+    if (currentLoading) {
+  return (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-12 h-12 border-4 border-accent-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+      );
+    }
+
+    switch (activeTab) {
+      case 'portfolio':
+        return data.userDetails ? (
+          <FinancialDataDisplay data={data.userDetails} />
+        ) : (
+          <div className="text-center py-12 text-dark-textSecondary">
+            <p>Failed to load portfolio data</p>
+            <button
+              onClick={loadUserDetails}
+              className="mt-4 px-6 py-2 bg-accent-primary rounded-xl hover:bg-accent-primary/80 transition-all"
+            >
+              Retry
+            </button>
+            </div>
+        );
+
+      case 'mutualfunds':
+        return <MutualFundsDisplay data={data.mutualfunds} />;
+
+      case 'termdeposit':
+        const tdData = data[`td-${activeSubTab.termdeposit}`];
+        if (activeSubTab.termdeposit === 'linked') {
+          return <TDLinkedAccountsDisplay data={tdData} />;
+        }
+        if (activeSubTab.termdeposit === 'details') {
+          return <UserDetailsDisplay data={tdData} />;
+        }
+        if (activeSubTab.termdeposit === 'statement') {
+          return <AccountStatementDisplay data={tdData} />;
+        }
+        return <DataTable data={tdData} maxItems={10} />;
+
+      case 'rddeposit':
+        const rdData = data[`rd-${activeSubTab.rddeposit}`];
+        if (activeSubTab.rddeposit === 'linked') {
+          return <RDLinkedAccountsDisplay data={rdData} />;
+        }
+        if (activeSubTab.rddeposit === 'details') {
+          return <UserDetailsDisplay data={rdData} />;
+        }
+        if (activeSubTab.rddeposit === 'statement') {
+          return <AccountStatementDisplay data={rdData} />;
+        }
+        return <DataTable data={rdData} maxItems={10} />;
+
+      case 'mfdetails':
+        const mfData = data[`mf-${activeSubTab.mfdetails}`];
+        if (activeSubTab.mfdetails === 'linked') {
+          return <MFLinkedAccountsDisplay data={mfData} />;
+        }
+        if (activeSubTab.mfdetails === 'folio') {
+          return <MFHoldingFolioDisplay data={mfData} />;
+        }
+        if (activeSubTab.mfdetails === 'details') {
+          return <MFUserDetailsDisplay data={mfData} />;
+        }
+        if (activeSubTab.mfdetails === 'statement') {
+          return <MFAccountStatementDisplay data={mfData} />;
+        }
+        if (activeSubTab.mfdetails === 'insights') {
+          return <MFInsightsDisplay data={mfData} />;
+        }
+        if (activeSubTab.mfdetails === 'analysis') {
+          return <MFAnalysisDisplay data={mfData} />;
+        }
+        return <DataTable data={mfData} maxItems={10} />;
+
+      case 'etf':
+        const etfData = data[`etf-${activeSubTab.etf}`];
+        if (activeSubTab.etf === 'linked') {
+          return <ETFLinkedAccountsDisplay data={etfData} />;
+        }
+        if (activeSubTab.etf === 'insights') {
+          return <ETFInsightsDisplay data={etfData} />;
+        }
+        if (activeSubTab.etf === 'statement') {
+          return <ETFAccountStatementDisplay data={etfData} />;
+        }
+        return <DataTable data={etfData} maxItems={10} />;
+
+      case 'equities':
+        const eqData = data[`eq-${activeSubTab.equities}`];
+        if (activeSubTab.equities === 'linked') {
+          return <EquitiesLinkedAccountsDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'holding-broker') {
+          return <EquitiesHoldingBrokerDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'demat') {
+          return <EquitiesDematHoldingDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'broker') {
+          return <EquitiesBrokerHoldingDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'details') {
+          return <EquitiesUserDetailsDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'combined') {
+          return <EquitiesETFsDematHoldingDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'statement') {
+          return <EquitiesAccountStatementDisplay data={eqData} />;
+        }
+        if (activeSubTab.equities === 'etf-statement') {
+          return <EquitiesAccountStatementDisplay data={eqData} />;
+        }
+        return <DataTable data={eqData} maxItems={10} />;
+
+      case 'deposit':
+        const depData = data[`dep-${activeSubTab.deposit}`];
+        if (activeSubTab.deposit === 'linked') {
+          return <DepositLinkedAccountsDisplay data={depData} />;
+        }
+        if (activeSubTab.deposit === 'details') {
+          return <UserDetailsDisplay data={depData} />;
+        }
+        if (activeSubTab.deposit === 'statement') {
+          return <AccountStatementDisplay data={depData} />;
+        }
+        if (activeSubTab.deposit === 'insights') {
+          return <DepositInsightsDisplay data={depData} />;
+        }
+        return <DataTable data={depData} maxItems={10} />;
+
+      case 'firequest':
+        return (
+          <div className="space-y-6">
+            <FIRequestDisplay 
+              data={data['fi-user']} 
+              title="FI Request User" 
+              icon="👤" 
+            />
+            {data['fi-account'] && (
+              <FIRequestDisplay 
+                data={data['fi-account']} 
+                title="FI Request Account" 
+                icon="🏦" 
+              />
+            )}
+          </div>
+        );
+
+      case 'fips':
+        return <FIPsDisplay data={data.fips} />;
+
+      case 'brokers':
+        return <BrokersDisplay data={data.brokers} />;
+
+      case 'nps':
+        return <NPSLinkedAccountsDisplay data={data.nps} />;
+
+      case 'consents':
+        return <AccountConsentsDisplay data={data.consents} />;
+
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span className="text-2xl">🧪</span>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
-                Test Dashboard
-              </h1>
-            </div>
-            <div className="flex gap-3">
-              <Link
-                href="/live-tester"
-                className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 rounded-lg font-semibold transition-all flex items-center gap-2"
-              >
-                <span>🔌</span>
-                Live Tester
-              </Link>
-              <Link
-                href="/api-reference"
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg font-semibold transition-all flex items-center gap-2"
-              >
-                <span>📚</span>
-                API Reference
-              </Link>
-              <Link
-                href="/"
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg font-semibold transition-all flex items-center gap-2"
-              >
-                <span>🏠</span>
-                Home
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-dark-bg relative overflow-hidden">
+      {/* Animated background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-accent-primary/10 via-transparent to-accent-secondary/10" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent-primary/20 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent-secondary/20 rounded-full blur-3xl animate-pulse" />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="relative z-10 flex">
+        {/* Sidebar */}
+        <Sidebar
+          items={sidebarItems}
+          activeItem={activeTab}
+          activeSubItem={activeSubTab[activeTab]}
+          onItemClick={(id) => {
+            setActiveTab(id as TabId);
+            // Set default sub-tab if it has sub-items
+            const item = sidebarItems.find(i => i.id === id);
+            if (item?.subItems && item.subItems.length > 0) {
+              setActiveSubTab(prev => ({ ...prev, [id]: item.subItems![0].id }));
+            }
+          }}
+          onSubItemClick={(itemId, subItemId) => {
+            setActiveTab(itemId as TabId);
+            setActiveSubTab(prev => ({ ...prev, [itemId]: subItemId }));
+          }}
+        />
+
+        {/* Main Content */}
+        <div className="flex-1 ml-64">
+          <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
           className="text-center mb-8"
         >
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-violet-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
-            Finfactor AA Integration Tests
+              <h1 className="text-4xl font-bold mb-2">
+                <span className="gradient-text">Finfactor</span> Account Aggregator
           </h1>
-          <p className="text-slate-400">
-            Test all database layers and Finfactor API integration
+              <p className="text-dark-textSecondary">
+                Complete financial data management platform
           </p>
         </motion.div>
 
-        {/* Summary Bar */}
-        {totalTests > 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mb-8 p-6 bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-3xl font-bold">
-                  <span className={totalPassed === totalTests ? 'text-emerald-400' : 'text-amber-400'}>
-                    {totalPassed}
-                  </span>
-                  <span className="text-slate-500">/{totalTests}</span>
-                </div>
-                <div className="text-slate-400">Tests Passed</div>
-              </div>
-              <div className={`text-6xl ${totalPassed === totalTests ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {totalPassed === totalTests ? '✓' : '!'}
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Control Buttons */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
-          {layers.map(layer => (
-            <motion.button
-              key={layer.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => runTest(layer.id, layer.endpoint)}
-              disabled={loading[layer.id] || loading.ALL}
-              className={`p-4 rounded-xl bg-gradient-to-r ${layer.color} disabled:opacity-50 disabled:cursor-not-allowed transition-all`}
-            >
-              {loading[layer.id] ? (
-                <div className="animate-spin text-2xl">⏳</div>
-              ) : (
-                <>
-                  <div className="font-bold">{layer.name}</div>
-                  <div className="text-xs opacity-80">{layer.subtitle}</div>
-                </>
-              )}
-            </motion.button>
-          ))}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={runAllTests}
-            disabled={loading.ALL}
-            className="p-4 rounded-xl bg-gradient-to-r from-pink-500 to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading.ALL ? (
-              <div className="animate-spin text-2xl">⏳</div>
-            ) : (
-              <>
-                <div className="font-bold">Run All</div>
-                <div className="text-xs opacity-80">A + B + C + Full</div>
-              </>
-            )}
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={cleanupAll}
-            disabled={loading.CLEANUP}
-            className="p-4 rounded-xl bg-gradient-to-r from-slate-600 to-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading.CLEANUP ? (
-              <div className="animate-spin text-2xl">🧹</div>
-            ) : (
-              <>
-                <div className="font-bold">Cleanup</div>
-                <div className="text-xs opacity-80">Remove test data</div>
-              </>
-            )}
-          </motion.button>
-        </div>
-
-        {/* Cleanup Status */}
-        <AnimatePresence>
-          {cleanupStatus && (
+            {/* Content Area */}
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              key={`${activeTab}-${activeSubTab[activeTab]}`}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mb-8 p-4 bg-slate-800/50 rounded-xl text-center"
+              transition={{ duration: 0.3 }}
+              className="glass-effect rounded-2xl p-8 mb-8"
             >
-              {cleanupStatus}
+              {renderContent()}
             </motion.div>
-          )}
-        </AnimatePresence>
 
-        {/* Results */}
-        <AnimatePresence>
-          {layers.map(layer => {
-            const result = results[layer.id];
-            if (!result) return null;
-            
-            return (
+            {/* Actions Grid - Only show on portfolio tab */}
+            {activeTab === 'portfolio' && (
               <motion.div
-                key={layer.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="mb-6"
+                transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700 overflow-hidden">
-                  {/* Layer Header */}
-                  <div className={`bg-gradient-to-r ${layer.color} p-4`}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h2 className="text-xl font-bold">{result.layerName || layer.name}</h2>
-                        <p className="text-sm opacity-80">{layer.subtitle}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className={`text-2xl font-bold ${result.summary.status === 'ALL_PASS' ? 'text-white' : 'text-amber-300'}`}>
-                          {result.summary.passed}/{result.summary.total}
-                        </div>
-                        <div className="text-sm opacity-80">{result.totalTime}ms</div>
-                      </div>
-                    </div>
-                  </div>
+                <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3">
+                  <span className="w-2 h-8 bg-gradient-to-b from-accent-primary to-accent-secondary rounded-full" />
+                  Quick Actions
+                </h2>
 
-                  {/* Tests List */}
-                  <div className="p-4">
-                    <div className="space-y-2">
-                      {result.tests.map((test, idx) => (
+                <div className="grid md:grid-cols-3 gap-6 mb-8">
+              {/* Card 1: Unlink Account */}
                         <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: idx * 0.05 }}
-                          className={`p-3 rounded-lg flex items-center justify-between ${
-                            test.status === 'PASS' ? 'bg-emerald-500/10 border border-emerald-500/20' :
-                            test.status === 'FAIL' ? 'bg-red-500/10 border border-red-500/20' :
-                            'bg-slate-700/50'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-xl">
-                              {test.status === 'PASS' ? '✅' : test.status === 'FAIL' ? '❌' : '⏳'}
-                            </span>
-                            <div>
-                              <div className="font-medium">
-                                {test.step && <span className="text-slate-400 mr-2">Step {test.step}:</span>}
-                                {test.name}
+                whileHover={{ scale: 1.02, y: -5 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                className="glass-effect rounded-2xl p-6 hover:border-accent-danger transition-colors"
+              >
+                <div className="w-12 h-12 bg-accent-danger/20 rounded-xl flex items-center justify-center mb-4">
+                  <svg
+                    className="w-6 h-6 text-accent-danger"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                    />
+                  </svg>
                               </div>
-                              {test.data && (
-                                <div className="text-sm text-slate-400 mt-1">
-                                  {JSON.stringify(test.data)}
-                                </div>
-                              )}
-                              {test.error && (
-                                <div className="text-sm text-red-400 mt-1">
-                                  ⚠️ {test.error}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-slate-400 text-sm">
-                            {test.time}ms
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <h3 className="text-xl font-semibold mb-2">Unlink Account</h3>
+                <p className="text-dark-textSecondary text-sm mb-6">
+                  Remove linked bank account from the system
+                </p>
+                <button
+                  onClick={handleDelinkAccount}
+                  disabled={actionLoading === 'delink'}
+                  className="w-full bg-accent-danger hover:bg-accent-danger/80 text-white font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {actionLoading === 'delink' ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Delink'
+                  )}
+                </button>
               </motion.div>
-            );
-          })}
-        </AnimatePresence>
 
-        {/* Footer */}
-        <div className="text-center text-slate-500 mt-12">
-          <p>Finfactor Account Aggregator • Integration Testing Suite</p>
-          <p className="text-sm mt-1">
-            Supabase URL: {process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30)}...
-          </p>
+              {/* Card 2: Connect Bank (Web Flow) */}
+              <motion.div
+                whileHover={{ scale: 1.02, y: -5 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                className="glass-effect rounded-2xl p-6 hover:border-accent-primary transition-colors"
+              >
+                <div className="w-12 h-12 bg-accent-primary/20 rounded-xl flex items-center justify-center mb-4">
+                  <svg
+                    className="w-6 h-6 text-accent-primary"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                                </div>
+                <h3 className="text-xl font-semibold mb-2">Connect Bank</h3>
+                <p className="text-dark-textSecondary text-sm mb-6">
+                  Initiate web flow to connect your bank account
+                </p>
+                <button
+                  onClick={handleConnectBank}
+                  disabled={actionLoading === 'connect'}
+                  className="w-full bg-accent-primary hover:bg-accent-primary/80 text-white font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {actionLoading === 'connect' ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Connect'
+                  )}
+                </button>
+                        </motion.div>
+
+              {/* Card 3: Direct Consent (V1) */}
+              <motion.div
+                whileHover={{ scale: 1.02, y: -5 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                className="glass-effect rounded-2xl p-6 hover:border-accent-secondary transition-colors"
+              >
+                <div className="w-12 h-12 bg-accent-secondary/20 rounded-xl flex items-center justify-center mb-4">
+                  <svg
+                    className="w-6 h-6 text-accent-secondary"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Direct Consent</h3>
+                <p className="text-dark-textSecondary text-sm mb-6">
+                  Submit consent request using V1 API
+                </p>
+                <button
+                  onClick={handleDirectConsent}
+                  disabled={actionLoading === 'consent'}
+                  className="w-full bg-accent-secondary hover:bg-accent-secondary/80 text-white font-semibold py-3 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {actionLoading === 'consent' ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Submit'
+                  )}
+                </button>
+              </motion.div>
+            </div>
+
+            {/* Consent V1 Response Display */}
+            <AnimatePresence>
+              {consentV1Data && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="glass-effect rounded-2xl p-8 border-2 border-accent-primary/20"
+                >
+                  <ConsentResponseDisplay data={consentV1Data} />
+                </motion.div>
+              )}
+        </AnimatePresence>
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
