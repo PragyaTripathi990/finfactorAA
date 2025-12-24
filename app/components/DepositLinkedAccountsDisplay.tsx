@@ -179,7 +179,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
   };
 
   // Render all fields of an account
-  const renderAccountFields = (account: any, accountId: string) => {
+  const renderAccountFields = (account: any, accountId: string): JSX.Element => {
     const isExpanded = expandedAccounts.has(accountId);
     const showAll = showAllFields.has(accountId);
     const fields = Object.entries(account);
@@ -381,7 +381,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Holder Information */}
         {holderFields.length > 0 ? (
