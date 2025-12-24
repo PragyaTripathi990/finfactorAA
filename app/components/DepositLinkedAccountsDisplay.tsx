@@ -294,7 +294,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Status Fields */}
         {statusFields.length > 0 && (
