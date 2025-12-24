@@ -276,7 +276,6 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           </div>
         )}
 
-        {/* Date & Time Fields */}
         {dateFields.length > 0 && (
           <div>
             <h5 className="text-sm font-bold text-accent-warning mb-2 flex items-center gap-2">
