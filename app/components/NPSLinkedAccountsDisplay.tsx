@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { camelToTitleCase } from '@/lib/formatters';
 
 interface NPSAccount {
@@ -55,28 +55,26 @@ interface NPSDisplayProps {
 }
 
 export default function NPSLinkedAccountsDisplay({ data }: NPSDisplayProps) {
-  // Auto-expand all sections by default
-  const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(() => {
-    const allAccountIds = new Set<string>();
+  const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
+  const [expandedFIPs, setExpandedFIPs] = useState<Set<string>>(new Set());
+
+  // Auto-expand all sections when data is loaded
+  useEffect(() => {
     if (data?.fipData) {
+      const allAccountIds = new Set<string>();
+      const allFIPIds = new Set<string>();
+      
       data.fipData.forEach((fip) => {
+        allFIPIds.add(fip.fipId);
         fip.linkedAccounts.forEach((account) => {
           allAccountIds.add(account.fiDataId);
         });
       });
+      
+      setExpandedFIPs(allFIPIds);
+      setExpandedAccounts(allAccountIds);
     }
-    return allAccountIds;
-  });
-  
-  const [expandedFIPs, setExpandedFIPs] = useState<Set<string>>(() => {
-    const allFIPIds = new Set<string>();
-    if (data?.fipData) {
-      data.fipData.forEach((fip) => {
-        allFIPIds.add(fip.fipId);
-      });
-    }
-    return allFIPIds;
-  });
+  }, [data]);
 
   if (!data || !data.fipData || data.fipData.length === 0) {
     return (
