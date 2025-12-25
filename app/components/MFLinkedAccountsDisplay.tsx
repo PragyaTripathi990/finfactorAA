@@ -353,7 +353,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* FI Data */}
         {fiDataValue ? (
