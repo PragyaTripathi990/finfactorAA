@@ -15,8 +15,15 @@ interface ApiEndpoint {
   sampleOutput?: string;
 }
 
+interface ApiCategory {
+  category: string;
+  icon: string;
+  description: string;
+  endpoints: ApiEndpoint[];
+}
+
 // API Reference Data
-const apiEndpoints = [
+const apiEndpoints: ApiCategory[] = [
   {
     category: 'Test Endpoints',
     icon: '🧪',
@@ -444,19 +451,19 @@ curl -s -X DELETE http://localhost:3000/api/test/full-flow | jq '.status'`;
 
                         {/* Sample Input/Output */}
                         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {(endpoint as ApiEndpoint).sampleInput && (
+                          {endpoint.sampleInput && (
                             <div>
                               <div className="text-xs text-slate-500 mb-1">Sample Input:</div>
                               <div className="bg-slate-950 rounded-lg p-2 overflow-x-auto">
-                                <pre className="text-xs text-amber-400 font-mono">{(endpoint as ApiEndpoint).sampleInput}</pre>
+                                <pre className="text-xs text-amber-400 font-mono">{endpoint.sampleInput}</pre>
                               </div>
                             </div>
                           )}
-                          {(endpoint as ApiEndpoint).sampleOutput && (
+                          {endpoint.sampleOutput && (
                             <div>
                               <div className="text-xs text-slate-500 mb-1">Sample Output:</div>
                               <div className="bg-slate-950 rounded-lg p-2 overflow-x-auto">
-                                <pre className="text-xs text-emerald-400 font-mono">{(endpoint as ApiEndpoint).sampleOutput}</pre>
+                                <pre className="text-xs text-emerald-400 font-mono">{endpoint.sampleOutput}</pre>
                               </div>
                             </div>
                           )}

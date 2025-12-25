@@ -395,9 +395,9 @@ export default function DepositInsightsDisplay({ data }: DepositInsightsDisplayP
                   acc[cat.type].value += cat.value || 0;
                   acc[cat.type].txnCount += cat.txnCount || 0;
                   return acc;
-                }, {});
+                }, {} as Record<string, { type: string; value: number; txnCount: number }>);
                 
-                const sorted = Object.values(grouped).sort((a: any, b: any) => b.value - a.value).slice(0, 5);
+                const sorted = (Object.values(grouped) as Array<{ type: string; value: number; txnCount: number }>).sort((a, b) => b.value - a.value).slice(0, 5);
                 const maxValue = sorted[0]?.value || 1;
                 
                 return sorted.length > 0 ? (
@@ -449,9 +449,9 @@ export default function DepositInsightsDisplay({ data }: DepositInsightsDisplayP
                   acc[cat.type].value += cat.value || 0;
                   acc[cat.type].txnCount += cat.txnCount || 0;
                   return acc;
-                }, {});
+                }, {} as Record<string, { type: string; value: number; txnCount: number }>);
                 
-                const sorted = Object.values(grouped).sort((a: any, b: any) => b.value - a.value).slice(0, 5);
+                const sorted = (Object.values(grouped) as Array<{ type: string; value: number; txnCount: number }>).sort((a, b) => b.value - a.value).slice(0, 5);
                 const maxValue = sorted[0]?.value || 1;
                 
                 return sorted.length > 0 ? (
