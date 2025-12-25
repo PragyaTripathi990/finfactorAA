@@ -6,7 +6,7 @@ import { camelToTitleCase } from '@/lib/formatters';
 
 interface ETFLinkedAccountsDisplayProps {
   data: any;
-) : null}
+}
 
 export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisplayProps) {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
@@ -21,7 +21,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
         <p className="text-lg">No ETF linked accounts data available</p>
       </div>
     );
-  ) : null}
+  }
 
   // Handle the API response structure - must be before useMemo
   const fipData = data?.fipData || [];
@@ -77,7 +77,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    ) : null}
+    }
     setExpandedAccounts(newSet);
   };
 
@@ -88,7 +88,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
       newSet.delete(fipId);
     } else {
       newSet.add(fipId);
-    ) : null}
+    }
     setExpandedFIPs(newSet);
   };
 
@@ -99,7 +99,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    ) : null}
+    }
     setShowAllFields(newSet);
   };
 
@@ -107,12 +107,12 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
   const renderField = (key: string, value: any, level: number = 0) => {
     if (value === null || value === undefined) {
       return <span className="text-dark-textSecondary italic text-sm">—</span>;
-    ) : null}
+    }
 
     if (Array.isArray(value)) {
       if (value.length === 0) {
         return <div className="text-dark-textSecondary text-sm">Empty array</div>;
-      ) : null}
+      }
       return (
         <div className="space-y-2">
           {value.map((item, idx) => (
@@ -133,7 +133,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
           ))}
         </div>
       );
-    ) : null}
+    }
 
     if (typeof value === 'object') {
       return (
@@ -146,18 +146,18 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
           ))}
         </div>
       );
-    ) : null}
+    }
 
     const lowerKey = key.toLowerCase();
     if (lowerKey.includes('balance') || lowerKey.includes('amount') || lowerKey.includes('value') || lowerKey.includes('nav') || lowerKey.includes('cost') || lowerKey.includes('price')) {
       if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
         return <span className="text-accent-success font-semibold">{formatCurrency(value)}</span>;
-      ) : null}
-    ) : null}
+      }
+    }
 
     if (lowerKey.includes('date') || lowerKey.includes('time')) {
       return <span className="text-dark-text">{formatDate(value)}</span>;
-    ) : null}
+    }
 
     if (typeof value === 'boolean') {
       return (
@@ -165,7 +165,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
           {value ? 'Yes' : 'No'}
         </span>
       );
-    ) : null}
+    }
 
     return <span className="text-dark-text break-words">{String(value)}</span>;
   };
@@ -735,5 +735,5 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
       </motion.div>
     </div>
   );
-) : null}
+}
 

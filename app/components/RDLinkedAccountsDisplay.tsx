@@ -6,7 +6,7 @@ import { camelToTitleCase, formatValue } from '@/lib/formatters';
 
 interface RDLinkedAccountsDisplayProps {
   data: any;
-) : null}
+}
 
 export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDisplayProps) {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
@@ -40,7 +40,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
         <p className="text-lg">No recurring deposit linked accounts data available</p>
       </div>
     );
-  ) : null}
+  }
 
   // Extract other data values after hooks
   const totalFiData = data.totalFiData || 0;
@@ -80,7 +80,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
         newSet.delete(accountId);
       } else {
         newSet.add(accountId);
-      ) : null}
+      }
       return newSet;
     });
   };
@@ -93,7 +93,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
         newSet.delete(fipId);
       } else {
         newSet.add(fipId);
-      ) : null}
+      }
       return newSet;
     });
   };
@@ -106,7 +106,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
         newSet.delete(id);
       } else {
         newSet.add(id);
-      ) : null}
+      }
       return newSet;
     });
   };
@@ -131,12 +131,12 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
   const renderField = (key: string, value: any, level: number = 0) => {
     if (value === null || value === undefined || value === '') {
       return <span className="text-dark-textSecondary italic text-sm">—</span>;
-    ) : null}
+    }
 
     if (Array.isArray(value)) {
       if (value.length === 0) {
         return <div className="text-dark-textSecondary text-sm">Empty array</div>;
-      ) : null}
+      }
       return (
         <div className="space-y-2">
           {value.map((item, idx) => (
@@ -157,7 +157,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
           ))}
         </div>
       );
-    ) : null}
+    }
 
     if (typeof value === 'object') {
       return (
@@ -170,24 +170,24 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
           ))}
         </div>
       );
-    ) : null}
+    }
 
     const lowerKey = key.toLowerCase();
     if (lowerKey.includes('date') || lowerKey.includes('time')) {
       return <span className="text-accent-secondary">{formatDate(value)}</span>;
-    ) : null}
+    }
     if (lowerKey.includes('value') || lowerKey.includes('price') || lowerKey.includes('amount') || lowerKey.includes('cost') || lowerKey.includes('balance')) {
       if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
         return <span className="text-accent-success font-semibold">{formatCurrency(value)}</span>;
-      ) : null}
-    ) : null}
+      }
+    }
     if (typeof value === 'boolean') {
       return (
         <span className={`font-semibold ${value ? 'text-accent-success' : 'text-accent-danger'}`}>
           {value ? 'Yes' : 'No'}
         </span>
       );
-    ) : null}
+    }
 
     return <span className="text-dark-text">{String(value)}</span>;
   };
@@ -311,7 +311,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Date & Time Fields */}
         {dateFields.length > 0 ? (
@@ -332,7 +332,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Status Fields */}
         {statusFields.length > 0 ? (
@@ -353,7 +353,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Consent Information */}
         {consentFields.length > 0 ? (
@@ -418,7 +418,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
                                     onClick={() => toggleShowAllFields(fieldKey)}
                                     className="text-xs text-accent-primary hover:text-accent-primary/80 transition-colors"
                                   >
-                                    ▶ Click to expand ({Array.isArray(value) ? `${value.length} items` : 'Object'})
+                                    ▶ Click to expand ({Array.isArray(value) ? `${value.length} items` : 'Object'} : null)
                                   </button>
                                 )}
                               </div>
@@ -438,7 +438,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Other Fields */}
         {otherFields.length > 0 ? (
@@ -710,5 +710,5 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
       )}
     </div>
   );
-) : null}
+}
 

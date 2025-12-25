@@ -6,7 +6,7 @@ import { camelToTitleCase } from '@/lib/formatters';
 
 interface EquitiesLinkedAccountsDisplayProps {
   data: any;
-) : null}
+}
 
 export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAccountsDisplayProps) {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
@@ -46,7 +46,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
         <p className="text-lg">No equities linked accounts data available</p>
       </div>
     );
-  ) : null}
+  }
 
   // Format currency
   const formatCurrency = (amount: number | string) => {
@@ -80,7 +80,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    ) : null}
+    }
     setExpandedAccounts(newSet);
   };
 
@@ -91,7 +91,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
       newSet.delete(fipId);
     } else {
       newSet.add(fipId);
-    ) : null}
+    }
     setExpandedFIPs(newSet);
   };
 
@@ -102,7 +102,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    ) : null}
+    }
     setShowAllFields(newSet);
   };
 
@@ -110,12 +110,12 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
   const renderField = (key: string, value: any, level: number = 0) => {
     if (value === null || value === undefined) {
       return <span className="text-dark-textSecondary italic text-sm">—</span>;
-    ) : null}
+    }
 
     if (Array.isArray(value)) {
       if (value.length === 0) {
         return <div className="text-dark-textSecondary text-sm">Empty array</div>;
-      ) : null}
+      }
       return (
         <div className="space-y-2">
           {value.map((item, idx) => (
@@ -136,7 +136,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
           ))}
         </div>
       );
-    ) : null}
+    }
 
     if (typeof value === 'object') {
       return (
@@ -149,18 +149,18 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
           ))}
         </div>
       );
-    ) : null}
+    }
 
     const lowerKey = key.toLowerCase();
     if (lowerKey.includes('balance') || lowerKey.includes('amount') || lowerKey.includes('value') || lowerKey.includes('price') || lowerKey.includes('cost')) {
       if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
         return <span className="text-accent-success font-semibold">{formatCurrency(value)}</span>;
-      ) : null}
-    ) : null}
+      }
+    }
 
     if (lowerKey.includes('date') || lowerKey.includes('time')) {
       return <span className="text-dark-text">{formatDate(value)}</span>;
-    ) : null}
+    }
 
     if (typeof value === 'boolean') {
       return (
@@ -168,7 +168,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
           {value ? 'Yes' : 'No'}
         </span>
       );
-    ) : null}
+    }
 
     return <span className="text-dark-text break-words">{String(value)}</span>;
   };
@@ -283,7 +283,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {/* Holding Information */}
         {holdingFields.length > 0 ? (
@@ -304,7 +304,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {/* Value & Price Information */}
         {valueFields.length > 0 ? (
@@ -325,7 +325,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {/* Date & Time Fields */}
         {dateFields.length > 0 ? (
@@ -346,7 +346,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {/* Status Fields */}
         {statusFields.length > 0 ? (
@@ -367,7 +367,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {holderFields.length > 0 ? (
           <div>
@@ -387,7 +387,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {/* Broker Information */}
         {brokerFields.length > 0 ? (
@@ -408,7 +408,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {/* FIP Information */}
         {fipFields.length > 0 ? (
@@ -429,7 +429,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {/* Request & Count Information */}
         {requestFields.length > 0 ? (
@@ -450,7 +450,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {/* Consent Information */}
         {consentFields.length > 0 ? (
@@ -471,7 +471,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {/* FI Data */}
         {fiDataValue ? (
@@ -537,7 +537,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               )}
             </div>
           </div>
-        ) : null}
+        }
 
         {/* Other Fields */}
         {otherFields.length > 0 ? (
@@ -558,7 +558,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        ) : null}
+        }
       </div>
     );
   };
@@ -817,5 +817,5 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
       )}
     </div>
   );
-) : null}
+}
 

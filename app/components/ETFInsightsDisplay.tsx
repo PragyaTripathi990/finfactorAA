@@ -208,7 +208,7 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                 <p className={`text-xs mt-1 ${returnsSummary.dailyReturnsPercentage >= 0 ? 'text-accent-success' : 'text-accent-danger'}`}>
                   {returnsSummary.dailyReturnsPercentage >= 0 ? '+' : ''}                  {returnsSummary.dailyReturnsPercentage.toFixed(2)}%
                 </p>
-              ) : null}
+              }
             </div>
           </div>
         </motion.div>
@@ -237,7 +237,7 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
             ))}
           </div>
         </motion.div>
-      ) : null}
+      }
 
       {/* Demat-wise Distribution */}
       {dematWiseDistribution.length > 0 ? (
@@ -272,12 +272,12 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                           <span className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary rounded font-mono">
                             {demat.dematId}
                           </span>
-                        ) : null}
+                        }
                         {demat.brokerCode ? (
                           <span className="text-xs px-2 py-1 bg-accent-secondary/20 text-accent-secondary rounded">
                             {demat.brokerCode}
                           </span>
-                        ) : null}
+                        }
                         <span className="text-xs px-2 py-1 bg-accent-success/20 text-accent-success rounded">
                           {demat.totalHoldings || 0} Holdings
                         </span>
@@ -285,7 +285,7 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                           <span className="text-xs px-2 py-1 bg-accent-warning/20 text-accent-warning rounded">
                             {demat.dematValuePercentage.toFixed(2)}%
                           </span>
-                        ) : null}
+                        }
                       </div>
                     </div>
                     <div className="text-right">
@@ -294,7 +294,7 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                         <p className={`text-sm font-semibold mt-1 ${dematReturns.dailyReturnsPercentage >= 0 ? 'text-accent-success' : 'text-accent-danger'}`}>
                           {dematReturns.dailyReturnsPercentage >= 0 ? '▲' : '▼'}                           {Math.abs(dematReturns.dailyReturnsPercentage).toFixed(2)}%
                         </p>
-                      ) : null}
+                      }
                       <span className="text-xs text-dark-textSecondary block mt-2">
                         {isExpanded ? '▼ Hide Details' : '▶ Show All Fields'}
                       </span>
@@ -309,13 +309,13 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                       <p className="text-xs text-dark-textSecondary mb-1">Total Holdings</p>
                       <p className="text-sm font-bold text-dark-text">{demat.totalHoldings}</p>
                     </div>
-                  ) : null}
+                  }
                   {dematReturns.dailyReturns !== undefined ? (
                     <div className="glass-effect rounded-lg p-3">
                       <p className="text-xs text-dark-textSecondary mb-1">Daily Returns</p>
                       <p className="text-sm font-bold text-accent-success">{formatCurrency(dematReturns.dailyReturns)}</p>
                     </div>
-                  ) : null}
+                  }
                   {dematReturns.dailyReturnsPercentage !== undefined ? (
                     <div className="glass-effect rounded-lg p-3">
                       <p className="text-xs text-dark-textSecondary mb-1">Daily Returns %</p>
@@ -323,13 +323,13 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                         {dematReturns.dailyReturnsPercentage >= 0 ? '+' : ''}{dematReturns.dailyReturnsPercentage.toFixed(2)}%
                       </p>
                     </div>
-                  ) : null}
+                  }
                   {demat.dematValuePercentage !== undefined ? (
                     <div className="glass-effect rounded-lg p-3">
                       <p className="text-xs text-dark-textSecondary mb-1">Portfolio %</p>
                       <p className="text-sm font-bold text-accent-warning">{demat.dematValuePercentage.toFixed(2)}%</p>
                     </div>
-                  ) : null}
+                  }
                 </div>
 
                 {/* Holdings Insights */}
@@ -360,7 +360,7 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                                   </h6>
                                   {holding.isin ? (
                                     <p className="text-xs text-dark-textSecondary font-mono mt-1">ISIN: {holding.isin}</p>
-                                  ) : null}
+                                  }
                                 </div>
                                 <div className="text-right">
                                   <p className="text-sm font-bold text-accent-success">{formatCurrency(holding.currentValue || 0)}</p>
@@ -368,7 +368,7 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                                     <p className={`text-xs ${holdingReturns.dailyReturnsPercentage >= 0 ? 'text-accent-success' : 'text-accent-danger'}`}>
                                       {holdingReturns.dailyReturnsPercentage >= 0 ? '+' : ''}{holdingReturns.dailyReturnsPercentage.toFixed(2)}%
                                     </p>
-                                  ) : null}
+                                  }
                                   <span className="text-xs text-dark-textSecondary">
                                     {isHoldingExpanded ? '▼' : '▶'}
                                   </span>
@@ -383,19 +383,19 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                                   <p className="text-xs text-dark-textSecondary">Units</p>
                                     <p className="text-sm font-bold text-dark-text">{holding.totalUnits.toLocaleString('en-IN')}</p>
                                 </div>
-                              ) : null}
+                              }
                               {holding.currentNAV !== undefined ? (
                                 <div className="text-center">
                                   <p className="text-xs text-dark-textSecondary">NAV</p>
                                     <p className="text-sm font-bold text-accent-success">{formatCurrency(holding.currentNAV)}</p>
                                 </div>
-                              ) : null}
+                              }
                               {holding.currentNAVDate ? (
                                 <div className="text-center">
                                   <p className="text-xs text-dark-textSecondary">NAV Date</p>
                                     <p className="text-sm font-bold text-dark-text">{formatDate(holding.currentNAVDate)}</p>
                                 </div>
-                              ) : null}
+                              }
                             </div>
 
                             {/* Expanded Holding Details */}
@@ -414,13 +414,13 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                                   ))}
                                 </div>
                               </div>
-                            ) : null}
+                            }
                           </div>
                         );
                       })}
                     </div>
                   </div>
-                ) : null}
+                }
 
                 {/* Expanded Demat Details */}
                 {isExpanded ? (
@@ -446,7 +446,7 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                       </pre>
                     </div>
                   </div>
-                ) : null}
+                }
               </motion.div>
             );
           })}
@@ -508,7 +508,7 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
               {JSON.stringify(data, null, 2)}
             </pre>
           </div>
-        ) : null}
+        }
       </motion.div>
     </div>
   );

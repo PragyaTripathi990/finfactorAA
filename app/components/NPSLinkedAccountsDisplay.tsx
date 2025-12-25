@@ -16,7 +16,7 @@ interface NPSAccount {
   accountCurrentValue: number;
   latestConsentExpiryTime?: string;
   [key: string]: any;
-) : null}
+}
 
 interface FIPData {
   fipId: string;
@@ -24,7 +24,7 @@ interface FIPData {
   totalFiData: number;
   linkedAccounts: NPSAccount[];
   currentValue: number;
-) : null}
+}
 
 interface NPSDisplayProps {
   data: {
@@ -32,7 +32,7 @@ interface NPSDisplayProps {
     fipData: FIPData[];
     currentValue: number;
   } | null;
-) : null}
+}
 
 export default function NPSLinkedAccountsDisplay({ data }: NPSDisplayProps) {
   if (!data || !data.fipData || data.fipData.length === 0) {
@@ -42,7 +42,7 @@ export default function NPSLinkedAccountsDisplay({ data }: NPSDisplayProps) {
         <p className="text-lg">No NPS linked accounts found</p>
       </div>
     );
-  ) : null}
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -134,7 +134,7 @@ export default function NPSLinkedAccountsDisplay({ data }: NPSDisplayProps) {
                     </div>
                     {account.holderName ? (
                       <p className="text-dark-textSecondary">{account.holderName}</p>
-                    )}
+                    ) : null}
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-dark-textSecondary mb-1">Current Value</p>
@@ -253,5 +253,5 @@ export default function NPSLinkedAccountsDisplay({ data }: NPSDisplayProps) {
       ))}
     </div>
   );
-) : null}
+}
 

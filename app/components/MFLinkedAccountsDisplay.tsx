@@ -6,7 +6,7 @@ import { camelToTitleCase } from '@/lib/formatters';
 
 interface MFLinkedAccountsDisplayProps {
   data: any;
-) : null}
+}
 
 export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDisplayProps) {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
@@ -40,7 +40,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
         <p className="text-lg">No mutual fund linked accounts data available</p>
       </div>
     );
-  ) : null}
+  }
 
   // Extract other data values after hooks
   const totalFiData = data.totalFiData || 0;
@@ -78,7 +78,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    ) : null}
+    }
     setExpandedAccounts(newSet);
   };
 
@@ -89,7 +89,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
       newSet.delete(fipId);
     } else {
       newSet.add(fipId);
-    ) : null}
+    }
     setExpandedFIPs(newSet);
   };
 
@@ -100,7 +100,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    ) : null}
+    }
     setShowAllFields(newSet);
   };
 
@@ -108,12 +108,12 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
   const renderField = (key: string, value: any, level: number = 0) => {
     if (value === null || value === undefined) {
       return <span className="text-dark-textSecondary italic text-sm">—</span>;
-    ) : null}
+    }
 
     if (Array.isArray(value)) {
       if (value.length === 0) {
         return <div className="text-dark-textSecondary text-sm">Empty array</div>;
-      ) : null}
+      }
       return (
         <div className="space-y-2">
           {value.map((item, idx) => (
@@ -134,7 +134,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
           ))}
         </div>
       );
-    ) : null}
+    }
 
     if (typeof value === 'object') {
       return (
@@ -147,18 +147,18 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
           ))}
         </div>
       );
-    ) : null}
+    }
 
     const lowerKey = key.toLowerCase();
     if (lowerKey.includes('balance') || lowerKey.includes('amount') || lowerKey.includes('value') || lowerKey.includes('nav') || lowerKey.includes('cost')) {
       if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
         return <span className="text-accent-success font-semibold">{formatCurrency(value)}</span>;
-      ) : null}
-    ) : null}
+      }
+    }
 
     if (lowerKey.includes('date') || lowerKey.includes('time')) {
       return <span className="text-dark-text">{formatDate(value)}</span>;
-    ) : null}
+    }
 
     if (typeof value === 'boolean') {
       return (
@@ -166,7 +166,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
           {value ? 'Yes' : 'No'}
         </span>
       );
-    ) : null}
+    }
 
     return <span className="text-dark-text break-words">{String(value)}</span>;
   };
@@ -733,5 +733,5 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
       </motion.div>
     </div>
   );
-) : null}
+}
 

@@ -6,7 +6,7 @@ import { camelToTitleCase, formatValue } from '@/lib/formatters';
 
 interface DepositLinkedAccountsDisplayProps {
   data: any;
-) : null}
+}
 
 export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAccountsDisplayProps) {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
@@ -40,7 +40,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
         <p className="text-lg">No deposit linked accounts data available</p>
       </div>
     );
-  ) : null}
+  }
 
   // Extract other data values after hooks
   const totalFiData = data.totalFiData || 0;
@@ -80,7 +80,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    ) : null}
+    }
     setExpandedAccounts(newSet);
   };
 
@@ -91,7 +91,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       newSet.delete(fipId);
     } else {
       newSet.add(fipId);
-    ) : null}
+    }
     setExpandedFIPs(newSet);
   };
 
@@ -101,13 +101,13 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       return (
         <div className="text-dark-textSecondary italic text-sm">—</div>
       );
-    ) : null}
+    }
 
     // Handle arrays
     if (Array.isArray(value)) {
       if (value.length === 0) {
         return <div className="text-dark-textSecondary text-sm">Empty array</div>;
-      ) : null}
+      }
       return (
         <div className="space-y-2">
           {value.map((item, idx) => (
@@ -128,7 +128,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           ))}
         </div>
       );
-    ) : null}
+    }
 
     // Handle nested objects
     if (typeof value === 'object') {
@@ -142,19 +142,19 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           ))}
         </div>
       );
-    ) : null}
+    }
 
     // Handle special formatting
     const lowerKey = key.toLowerCase();
     if (lowerKey.includes('balance') || lowerKey.includes('amount') || lowerKey.includes('value')) {
       if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
         return <span className="text-accent-success font-semibold">{formatCurrency(value)}</span>;
-      ) : null}
-    ) : null}
+      }
+    }
 
     if (lowerKey.includes('date') || lowerKey.includes('time')) {
       return <span className="text-dark-text">{formatDate(value)}</span>;
-    ) : null}
+    }
 
     if (typeof value === 'boolean') {
       return (
@@ -162,7 +162,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           {value ? 'Yes' : 'No'}
         </span>
       );
-    ) : null}
+    }
 
     return <span className="text-dark-text break-words">{String(value)}</span>;
   };
@@ -174,7 +174,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    ) : null}
+    }
     setShowAllFields(newSet);
   };
 
@@ -252,7 +252,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {balanceFields.length > 0 ? (
           <div>
@@ -272,7 +272,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {dateFields.length > 0 ? (
           <div>
@@ -292,7 +292,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {statusFields.length > 0 ? (
           <div>
@@ -312,7 +312,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {fiDataValue ? (
           <div>
@@ -377,7 +377,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               )}
             </div>
           </div>
-        ) : null}
+        }
 
         {holderFields.length > 0 ? (
           <div>
@@ -397,7 +397,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {consentFields.length > 0 ? (
           <div>
@@ -417,7 +417,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         {otherFields.length > 0 ? (
           <div>
@@ -437,7 +437,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        ) : null}
+        }
 
         <div>
           <button
@@ -459,7 +459,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                 {JSON.stringify(account, null, 2)}
               </pre>
             </div>
-          ) : null}
+          }
         </div>
       </div>
     );
@@ -489,13 +489,13 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
             >
               ✕
             </button>
-          ) : null}
+          }
         </div>
         {searchQuery ? (
           <p className="text-xs text-dark-textSecondary mt-2">
             Found {filteredFipData.reduce((sum: number, fip: any) => sum + (fip.linkedAccounts?.length || 0), 0)} account(s) matching "{searchQuery}"
           </p>
-        ) : null}
+        }
       </motion.div>
 
       {/* Summary Cards */}
@@ -559,7 +559,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               </div>
             </div>
           </motion.div>
-        ) : null}
+        }
       </div>
 
       {/* FIP Data */}
@@ -576,7 +576,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
             >
               Clear Search
             </button>
-          ) : null}
+          }
         </div>
       ) : (
         filteredFipData.map((fip: any, fipIdx: number) => {
@@ -636,7 +636,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                       ))}
                   </div>
                 </div>
-              ) : null}
+              }
 
               {/* Linked Accounts */}
               {linkedAccounts.length === 0 ? (
@@ -671,23 +671,23 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                                 </h4>
                                 {account.accountName ? (
                                   <p className="text-sm text-dark-textSecondary">{account.accountName}</p>
-                                ) : null}
+                                }
                                 <div className="flex flex-wrap gap-2 mt-2">
                                   {account.accountType ? (
                                     <span className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary rounded">
                                       {account.accountType}
                                     </span>
-                                  ) : null}
+                                  }
                                   {account.fipName ? (
                                     <span className="text-xs px-2 py-1 bg-accent-secondary/20 text-accent-secondary rounded">
                                       {account.fipName}
                                     </span>
-                                  ) : null}
+                                  }
                                   {account.dataFetched !== undefined ? (
                                     <span className={`text-xs px-2 py-1 rounded ${account.dataFetched ? 'bg-accent-success/20 text-accent-success' : 'bg-accent-warning/20 text-accent-warning'}`}>
                                       {account.dataFetched ? '✓ Data Fetched' : '⚠ Not Fetched'}
                                     </span>
-                                  ) : null}
+                                  }
                                 </div>
                               </div>
                             </div>
@@ -696,7 +696,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                                 <p className="text-xl font-bold gradient-text">
                                   {formatCurrency(account.accountCurrentBalance)}
                                 </p>
-                              ) : null}
+                              }
                               <span className="text-dark-textSecondary text-sm block mt-1">
                                 {isExpanded ? '▼ Show Less' : '▶ Show All Fields'}
                               </span>
@@ -712,7 +712,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                           <div className="pt-4 border-t border-dark-border">
                             {renderAccountFields(account, accountId)}
                           </div>
-                        ) : null}
+                        }
                       </motion.div>
                     );
                   })}
@@ -770,7 +770,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
             </div>
           </div>
         </motion.div>
-      ) : null}
+      }
 
       {/* Raw JSON View for entire response */}
       <motion.div
@@ -797,9 +797,9 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               {JSON.stringify(data, null, 2)}
             </pre>
           </div>
-        ) : null}
+        }
       </motion.div>
     </div>
   );
-) : null}
+}
 
