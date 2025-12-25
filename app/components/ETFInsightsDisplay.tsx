@@ -208,7 +208,7 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                 <p className={`text-xs mt-1 ${returnsSummary.dailyReturnsPercentage >= 0 ? 'text-accent-success' : 'text-accent-danger'}`}>
                   {returnsSummary.dailyReturnsPercentage >= 0 ? '+' : ''}                  {returnsSummary.dailyReturnsPercentage.toFixed(2)}%
                 </p>
-              }
+              ) : null}
             </div>
           </div>
         </motion.div>

@@ -252,7 +252,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        }
+        ) : null}
 
         {balanceFields.length > 0 ? (
           <div>
@@ -272,7 +272,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        }
+        ) : null}
 
         {dateFields.length > 0 ? (
           <div>
@@ -292,7 +292,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        }
+        ) : null}
 
         {statusFields.length > 0 ? (
           <div>
@@ -312,7 +312,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        }
+        ) : null}
 
         {fiDataValue ? (
           <div>
@@ -377,7 +377,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               )}
             </div>
           </div>
-        }
+        ) : null}
 
         {holderFields.length > 0 ? (
           <div>
@@ -397,7 +397,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        }
+        ) : null}
 
         {consentFields.length > 0 ? (
           <div>
@@ -417,7 +417,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        }
+        ) : null}
 
         {otherFields.length > 0 ? (
           <div>
@@ -459,7 +459,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                 {JSON.stringify(account, null, 2)}
               </pre>
             </div>
-          }
+          ) : null}
         </div>
       </div>
     );
@@ -489,13 +489,13 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
             >
               ✕
             </button>
-          }
+          ) : null}
         </div>
         {searchQuery ? (
           <p className="text-xs text-dark-textSecondary mt-2">
             Found {filteredFipData.reduce((sum: number, fip: any) => sum + (fip.linkedAccounts?.length || 0), 0)} account(s) matching "{searchQuery}"
           </p>
-        }
+        ) : null}
       </motion.div>
 
       {/* Summary Cards */}
