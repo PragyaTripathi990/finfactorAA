@@ -158,35 +158,35 @@ export default function NPSLinkedAccountsDisplay({ data }: NPSDisplayProps) {
                       <p className="text-xs font-semibold text-dark-textSecondary">PAN</p>
                       <p className="text-sm text-dark-text font-mono">{account.holderPan}</p>
                     </div>
-                  )}
+                  ) : null}
 
                   {account.holderMobile ? (
                     <div className="space-y-1">
                       <p className="text-xs font-semibold text-dark-textSecondary">Mobile</p>
                       <p className="text-sm text-dark-text">{account.holderMobile}</p>
                     </div>
-                  )}
+                  ) : null}
 
                   {account.holderEmail ? (
                     <div className="space-y-1">
                       <p className="text-xs font-semibold text-dark-textSecondary">Email</p>
                       <p className="text-sm text-dark-text break-all">{account.holderEmail}</p>
                     </div>
-                  )}
+                  ) : null}
 
                   {account.holderDob ? (
                     <div className="space-y-1">
                       <p className="text-xs font-semibold text-dark-textSecondary">Date of Birth</p>
                       <p className="text-sm text-dark-text">{formatDate(account.holderDob)}</p>
                     </div>
-                  )}
+                  ) : null}
 
                   {account.holderNominee ? (
                     <div className="space-y-1">
                       <p className="text-xs font-semibold text-dark-textSecondary">Nominee Status</p>
                       <p className="text-sm text-dark-text">{account.holderNominee}</p>
                     </div>
-                  )}
+                  ) : null}
 
                   <div className="space-y-1">
                     <p className="text-xs font-semibold text-dark-textSecondary">Data Status</p>
@@ -208,7 +208,7 @@ export default function NPSLinkedAccountsDisplay({ data }: NPSDisplayProps) {
                       <p className="text-xs font-semibold text-dark-textSecondary">Last Updated</p>
                       <p className="text-sm text-dark-text">{formatDate(account.lastFetchDateTime)}</p>
                     </div>
-                  )}
+                  ) : null}
 
                   {account.latestConsentExpiryTime ? (
                     <div className="space-y-1">
@@ -217,7 +217,7 @@ export default function NPSLinkedAccountsDisplay({ data }: NPSDisplayProps) {
                         {formatDate(account.latestConsentExpiryTime)}
                       </p>
                     </div>
-                  )}
+                  ) : null}
 
                   {account.fiRequestCountOfCurrentMonth !== undefined ? (
                     <div className="space-y-1">
@@ -226,7 +226,7 @@ export default function NPSLinkedAccountsDisplay({ data }: NPSDisplayProps) {
                       </p>
                       <p className="text-sm text-dark-text">{account.fiRequestCountOfCurrentMonth}</p>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Address if available */}
@@ -235,7 +235,7 @@ export default function NPSLinkedAccountsDisplay({ data }: NPSDisplayProps) {
                     <p className="text-xs font-semibold text-dark-textSecondary mb-1">Address</p>
                     <p className="text-sm text-dark-text">{account.holderAddress}</p>
                   </div>
-                )}
+                ) : null}
 
                 {/* Consent Purpose if available */}
                 {account.latestConsentPurposeText ? (
@@ -245,7 +245,7 @@ export default function NPSLinkedAccountsDisplay({ data }: NPSDisplayProps) {
                     </p>
                     <p className="text-sm text-dark-text italic">{account.latestConsentPurposeText}</p>
                   </div>
-                )}
+                ) : null}
               </motion.div>
             ))}
           </div>
