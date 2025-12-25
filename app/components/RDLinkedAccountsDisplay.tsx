@@ -661,12 +661,12 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
                                         <span className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary rounded">
                                           {camelToTitleCase(account.linkedAccountType)}
                                         </span>
-                                      )}
+                                      ) : null}
                                       {account.accountRefNumber ? (
                                         <span className="text-xs px-2 py-1 bg-accent-info/20 text-accent-info rounded font-mono">
                                           Ref: {account.accountRefNumber}
                                         </span>
-                                      )}
+                                      ) : null}
                                       {account.dataFetched ? (
                                         <span className="text-xs px-2 py-1 bg-accent-success/20 text-accent-success rounded">
                                           Data Fetched
