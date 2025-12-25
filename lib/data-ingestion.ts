@@ -272,33 +272,35 @@ async function computeAndStoreLayerC(
   const user = await getUserByIdentifier(uniqueIdentifier);
   if (!user) return;
   
-  // Import computation functions
-  const {
-    computeDepositSummaries,
-    computeTermDepositSummaries,
-    computeRecurringDepositSummaries,
-    computeMutualFundSummaries,
-    computeEquitySummaries,
-  } = await import('./supabase-server');
+  // TODO: Import computation functions when they are implemented
+  // These functions are not yet available in supabase-server.ts
+  // const {
+  //   computeDepositSummaries,
+  //   computeTermDepositSummaries,
+  //   computeRecurringDepositSummaries,
+  //   computeMutualFundSummaries,
+  //   computeEquitySummaries,
+  // } = await import('./supabase-server');
   
   // Compute summaries based on FI type
-  switch (fiType) {
-    case 'DEPOSIT':
-      await computeDepositSummaries(user.id, fetchRunId);
-      break;
-    case 'TERM_DEPOSIT':
-      await computeTermDepositSummaries(user.id, fetchRunId);
-      break;
-    case 'RECURRING_DEPOSIT':
-      await computeRecurringDepositSummaries(user.id, fetchRunId);
-      break;
-    case 'MUTUAL_FUNDS':
-      await computeMutualFundSummaries(user.id, fetchRunId);
-      break;
-    case 'EQUITIES':
-      await computeEquitySummaries(user.id, fetchRunId);
-      break;
-  }
+  // TODO: Uncomment when computation functions are implemented
+  // switch (fiType) {
+  //   case 'DEPOSIT':
+  //     await computeDepositSummaries(user.id, fetchRunId);
+  //     break;
+  //   case 'TERM_DEPOSIT':
+  //     await computeTermDepositSummaries(user.id, fetchRunId);
+  //     break;
+  //   case 'RECURRING_DEPOSIT':
+  //     await computeRecurringDepositSummaries(user.id, fetchRunId);
+  //     break;
+  //   case 'MUTUAL_FUNDS':
+  //     await computeMutualFundSummaries(user.id, fetchRunId);
+  //     break;
+  //   case 'EQUITIES':
+  //     await computeEquitySummaries(user.id, fetchRunId);
+  //     break;
+  // }
 }
 
 /**

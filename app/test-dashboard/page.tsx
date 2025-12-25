@@ -184,7 +184,12 @@ export default function TestDashboardPage() {
             loadData('mf-consent', getMFCConsentRequest);
             break;
           case 'approve':
-            loadData('mf-approve', getMFCConsentApprove);
+            // getMFCConsentApprove requires clientReferenceId and OTP, so it can't be auto-loaded
+            // This should be called from a form/button with user input
+            loadData('mf-approve', async () => {
+              toast.error('MFC Consent Approve requires clientReferenceId and OTP. Please use the form to submit.');
+              return null;
+            });
             break;
         }
         break;
