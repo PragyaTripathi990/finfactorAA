@@ -437,7 +437,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               ))}
             </div>
           </div>
-        }
+        ) : null}
 
         <div>
           <button
@@ -559,7 +559,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               </div>
             </div>
           </motion.div>
-        }
+        ) : null}
       </div>
 
       {/* FIP Data */}
@@ -576,7 +576,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
             >
               Clear Search
             </button>
-          }
+          ) : null}
         </div>
       ) : (
         filteredFipData.map((fip: any, fipIdx: number) => {
@@ -636,7 +636,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                       ))}
                   </div>
                 </div>
-              }
+              ) : null}
 
               {/* Linked Accounts */}
               {linkedAccounts.length === 0 ? (
@@ -671,23 +671,23 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                                 </h4>
                                 {account.accountName ? (
                                   <p className="text-sm text-dark-textSecondary">{account.accountName}</p>
-                                }
+                                ) : null}
                                 <div className="flex flex-wrap gap-2 mt-2">
                                   {account.accountType ? (
                                     <span className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary rounded">
                                       {account.accountType}
                                     </span>
-                                  }
+                                  ) : null}
                                   {account.fipName ? (
                                     <span className="text-xs px-2 py-1 bg-accent-secondary/20 text-accent-secondary rounded">
                                       {account.fipName}
                                     </span>
-                                  }
+                                  ) : null}
                                   {account.dataFetched !== undefined ? (
                                     <span className={`text-xs px-2 py-1 rounded ${account.dataFetched ? 'bg-accent-success/20 text-accent-success' : 'bg-accent-warning/20 text-accent-warning'}`}>
                                       {account.dataFetched ? '✓ Data Fetched' : '⚠ Not Fetched'}
                                     </span>
-                                  }
+                                  ) : null}
                                 </div>
                               </div>
                             </div>
@@ -696,7 +696,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                                 <p className="text-xl font-bold gradient-text">
                                   {formatCurrency(account.accountCurrentBalance)}
                                 </p>
-                              }
+                              ) : null}
                               <span className="text-dark-textSecondary text-sm block mt-1">
                                 {isExpanded ? '▼ Show Less' : '▶ Show All Fields'}
                               </span>
@@ -712,7 +712,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
                           <div className="pt-4 border-t border-dark-border">
                             {renderAccountFields(account, accountId)}
                           </div>
-                        }
+                        ) : null}
                       </motion.div>
                     );
                   })}
@@ -770,7 +770,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
             </div>
           </div>
         </motion.div>
-      }
+      ) : null}
 
       {/* Raw JSON View for entire response */}
       <motion.div
@@ -797,7 +797,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
               {JSON.stringify(data, null, 2)}
             </pre>
           </div>
-        }
+        ) : null}
       </motion.div>
     </div>
   );

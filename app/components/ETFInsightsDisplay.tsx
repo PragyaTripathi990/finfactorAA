@@ -237,7 +237,7 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
             ))}
           </div>
         </motion.div>
-      }
+      ) : null}
 
       {/* Demat-wise Distribution */}
       {dematWiseDistribution.length > 0 ? (
