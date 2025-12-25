@@ -270,7 +270,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Balance & Amount Information */}
         {balanceFields.length > 0 ? (
@@ -418,7 +418,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
                                     onClick={() => toggleShowAllFields(fieldKey)}
                                     className="text-xs text-accent-primary hover:text-accent-primary/80 transition-colors"
                                   >
-                                    ▶ Click to expand ({Array.isArray(value) ? `${value.length} items` : 'Object'} : null)
+                                    ▶ Click to expand (${Array.isArray(value) ? `${value.length} items` : 'Object'})
                                   </button>
                                 )}
                               </div>
