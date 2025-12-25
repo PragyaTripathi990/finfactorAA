@@ -248,7 +248,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Holding Information */}
         {holdingFields.length > 0 ? (
@@ -269,7 +269,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Value & Cost Information */}
         {valueFields.length > 0 ? (
@@ -290,7 +290,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Date & Time Fields */}
         {dateFields.length > 0 ? (
@@ -311,7 +311,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Status Fields */}
         {statusFields.length > 0 ? (
@@ -332,7 +332,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Consent Information */}
         {consentFields.length > 0 ? (
@@ -419,7 +419,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Other Fields */}
         {otherFields.length > 0 ? (
@@ -463,7 +463,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
                 {JSON.stringify(account, null, 2)}
               </pre>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     );
@@ -493,13 +493,13 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
             >
               ✕
             </button>
-          )}
+          ) : null}
         </div>
         {searchQuery ? (
           <p className="text-xs text-dark-textSecondary mt-2">
             Found {filteredFipData.reduce((sum: number, fip: any) => sum + (fip.linkedAccounts?.length || 0), 0)} account(s) matching "{searchQuery}"
           </p>
-        )}
+        ) : null}
       </motion.div>
 
       {/* Summary Cards */}
