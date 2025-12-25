@@ -617,7 +617,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
                       ))}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* Linked Accounts */}
               {linkedAccounts.length === 0 ? (
