@@ -459,7 +459,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     );
   };
@@ -501,7 +501,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
             </div>
             <span className="text-4xl opacity-50">📅</span>
           </div>
-        )}
+        ) : null}
       </motion.div>
 
       {/* Search Bar */}
@@ -526,13 +526,13 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
             >
               ✕
             </button>
-          )}
+          ) : null}
         </div>
         {searchQuery ? (
           <p className="text-xs text-dark-textSecondary mt-2">
             Found {filteredFipData.reduce((sum: number, fip: any) => sum + (fip.linkedAccounts?.length || 0), 0)} account(s) matching "{searchQuery}"
           </p>
-        )}
+        ) : null}
       </motion.div>
 
       {/* Bulk Actions */}
@@ -551,7 +551,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
             ▼ Collapse All
           </button>
         </div>
-      )}
+      ) : null}
 
       {/* FIP Data */}
       {filteredFipData.length === 0 ? (
@@ -591,12 +591,12 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
                           <span className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary rounded font-mono">
                             {fip.fipId}
                           </span>
-                        )}
+                        ) : null}
                         {linkedAccounts.length > 0 ? (
                           <span className="text-xs px-2 py-1 bg-accent-info/20 text-accent-info rounded">
                             {linkedAccounts.length} Account{linkedAccounts.length !== 1 ? 's' : ''}
                           </span>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                     <span className="text-2xl text-dark-textSecondary transition-transform duration-200">
@@ -671,12 +671,12 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
                                         <span className="text-xs px-2 py-1 bg-accent-success/20 text-accent-success rounded">
                                           Data Fetched
                                         </span>
-                                      )}
+                                      ) : null}
                                       {account.currentBalance !== undefined ? (
                                         <span className="text-xs px-2 py-1 bg-accent-success/20 text-accent-success rounded">
                                           {formatCurrency(account.currentBalance)}
                                         </span>
-                                      )}
+                                      ) : null}
                                     </div>
                                   </div>
                                   <span className="text-xl text-dark-textSecondary transition-transform duration-200">
@@ -695,14 +695,14 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
                                 >
                                   {renderAccountFields(account, accountId)}
                                 </motion.div>
-                              )}
+                              ) : null}
                             </motion.div>
                           );
                         })}
                       </div>
                     )}
                   </motion.div>
-                )}
+                ) : null}
               </motion.div>
             );
           })}

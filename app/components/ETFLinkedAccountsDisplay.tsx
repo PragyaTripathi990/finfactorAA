@@ -250,7 +250,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Holding Information */}
         {holdingFields.length > 0 ? (
@@ -271,7 +271,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Value & Cost Information */}
         {valueFields.length > 0 ? (
@@ -292,7 +292,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Date & Time Fields */}
         {dateFields.length > 0 ? (
@@ -313,7 +313,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Status Fields */}
         {statusFields.length > 0 ? (
@@ -334,7 +334,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Consent Information */}
         {consentFields.length > 0 ? (
@@ -355,7 +355,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* FI Data */}
         {fiDataValue ? (
@@ -421,7 +421,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Other Fields */}
         {otherFields.length > 0 ? (
@@ -442,7 +442,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Raw JSON View */}
         <div>
@@ -465,7 +465,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
                 {JSON.stringify(account, null, 2)}
               </pre>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     );
@@ -495,13 +495,13 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
             >
               ✕
             </button>
-          )}
+          ) : null}
         </div>
         {searchQuery ? (
           <p className="text-xs text-dark-textSecondary mt-2">
             Found {filteredFipData.reduce((sum: number, fip: any) => sum + (fip.linkedAccounts?.length || 0), 0)} account(s) matching "{searchQuery}"
           </p>
-        )}
+        ) : null}
       </motion.div>
 
       {/* Summary Cards */}
@@ -619,7 +619,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
                       ))}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* Linked Accounts */}
               {linkedAccounts.length === 0 ? (
@@ -654,23 +654,23 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
                                 </h4>
                                 {account.brokerName ? (
                                   <p className="text-sm text-dark-textSecondary">{account.brokerName}</p>
-                                )}
+                                ) : null}
                                 <div className="flex flex-wrap gap-2 mt-2">
                                   {account.accountType ? (
                                     <span className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary rounded">
                                       {account.accountType}
                                     </span>
-                                  )}
+                                  ) : null}
                                   {account.fipName ? (
                                     <span className="text-xs px-2 py-1 bg-accent-secondary/20 text-accent-secondary rounded">
                                       {account.fipName}
                                     </span>
-                                  )}
+                                  ) : null}
                                   {account.dataFetched !== undefined ? (
                                     <span className={`text-xs px-2 py-1 rounded ${account.dataFetched ? 'bg-accent-success/20 text-accent-success' : 'bg-accent-warning/20 text-accent-warning'}`}>
                                       {account.dataFetched ? '✓ Data Fetched' : '⚠ Not Fetched'}
                                     </span>
-                                  )}
+                                  ) : null}
                                 </div>
                               </div>
                             </div>
@@ -679,7 +679,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
                                 <p className="text-xl font-bold gradient-text">
                                   {formatCurrency(account.currentValue)}
                                 </p>
-                              )}
+                              ) : null}
                               <span className="text-dark-textSecondary text-sm block mt-1">
                                 {isExpanded ? '▼ Show Less' : '▶ Show All Fields'}
                               </span>
@@ -695,7 +695,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
                           <div className="pt-4 border-t border-dark-border">
                             {renderAccountFields(account, accountId)}
                           </div>
-                        )}
+                        ) : null}
                       </motion.div>
                     );
                   })}
@@ -731,7 +731,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
               {JSON.stringify(data, null, 2)}
             </pre>
           </div>
-        )}
+        ) : null}
       </motion.div>
     </div>
   );
