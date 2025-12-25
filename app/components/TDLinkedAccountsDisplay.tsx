@@ -374,7 +374,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* FI Data */}
         {fiDataValue ? (

@@ -440,7 +440,7 @@ export default function MFLinkedAccountsDisplay({ data }: MFLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Raw JSON View */}
         <div>

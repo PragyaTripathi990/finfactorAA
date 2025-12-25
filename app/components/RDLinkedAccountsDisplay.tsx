@@ -374,7 +374,7 @@ export default function RDLinkedAccountsDisplay({ data }: RDLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* FI Data */}
         {fiDataValue ? (
