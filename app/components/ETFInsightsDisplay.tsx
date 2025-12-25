@@ -204,18 +204,18 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
               <p className="text-2xl font-bold text-accent-warning">
                 {formatCurrency(returnsSummary.dailyReturns || 0)}
               </p>
-              {returnsSummary.dailyReturnsPercentage !== undefined && (
+              {returnsSummary.dailyReturnsPercentage !== undefined ? (
                 <p className={`text-xs mt-1 ${returnsSummary.dailyReturnsPercentage >= 0 ? 'text-accent-success' : 'text-accent-danger'}`}>
-                  {returnsSummary.dailyReturnsPercentage >= 0 ? '+' : ''}{returnsSummary.dailyReturnsPercentage.toFixed(2)}%
+                  {returnsSummary.dailyReturnsPercentage >= 0 ? '+' : ''}                  {returnsSummary.dailyReturnsPercentage.toFixed(2)}%
                 </p>
-              )}
+              ) : null}
             </div>
           </div>
         </motion.div>
       </div>
 
       {/* Returns Summary */}
-      {returnsSummary && Object.keys(returnsSummary).length > 0 && (
+      {returnsSummary && Object.keys(returnsSummary).length > 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -237,7 +237,7 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
             ))}
           </div>
         </motion.div>
-      )}
+      ) : null}
 
       {/* Demat-wise Distribution */}
       {dematWiseDistribution.length > 0 ? (
@@ -268,33 +268,33 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                         {demat.brokerName || demat.dematId || `Demat ${idx + 1}`}
                       </h5>
                       <div className="flex flex-wrap gap-2">
-                        {demat.dematId && (
+                        {demat.dematId ? (
                           <span className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary rounded font-mono">
                             {demat.dematId}
                           </span>
-                        )}
-                        {demat.brokerCode && (
+                        ) : null}
+                        {demat.brokerCode ? (
                           <span className="text-xs px-2 py-1 bg-accent-secondary/20 text-accent-secondary rounded">
                             {demat.brokerCode}
                           </span>
-                        )}
+                        ) : null}
                         <span className="text-xs px-2 py-1 bg-accent-success/20 text-accent-success rounded">
                           {demat.totalHoldings || 0} Holdings
                         </span>
-                        {demat.dematValuePercentage !== undefined && (
+                        {demat.dematValuePercentage !== undefined ? (
                           <span className="text-xs px-2 py-1 bg-accent-warning/20 text-accent-warning rounded">
                             {demat.dematValuePercentage.toFixed(2)}%
                           </span>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold gradient-text">{formatCurrency(demat.currentValue || 0)}</p>
-                      {dematReturns.dailyReturnsPercentage !== undefined && (
+                      {dematReturns.dailyReturnsPercentage !== undefined ? (
                         <p className={`text-sm font-semibold mt-1 ${dematReturns.dailyReturnsPercentage >= 0 ? 'text-accent-success' : 'text-accent-danger'}`}>
-                          {dematReturns.dailyReturnsPercentage >= 0 ? '▲' : '▼'} {Math.abs(dematReturns.dailyReturnsPercentage).toFixed(2)}%
+                          {dematReturns.dailyReturnsPercentage >= 0 ? '▲' : '▼'}                           {Math.abs(dematReturns.dailyReturnsPercentage).toFixed(2)}%
                         </p>
-                      )}
+                      ) : null}
                       <span className="text-xs text-dark-textSecondary block mt-2">
                         {isExpanded ? '▼ Hide Details' : '▶ Show All Fields'}
                       </span>
@@ -304,36 +304,36 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
 
                 {/* Quick Stats */}
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                  {demat.totalHoldings !== undefined && (
+                  {demat.totalHoldings !== undefined ? (
                     <div className="glass-effect rounded-lg p-3">
                       <p className="text-xs text-dark-textSecondary mb-1">Total Holdings</p>
                       <p className="text-sm font-bold text-dark-text">{demat.totalHoldings}</p>
                     </div>
-                  )}
-                  {dematReturns.dailyReturns !== undefined && (
+                  ) : null}
+                  {dematReturns.dailyReturns !== undefined ? (
                     <div className="glass-effect rounded-lg p-3">
                       <p className="text-xs text-dark-textSecondary mb-1">Daily Returns</p>
                       <p className="text-sm font-bold text-accent-success">{formatCurrency(dematReturns.dailyReturns)}</p>
                     </div>
-                  )}
-                  {dematReturns.dailyReturnsPercentage !== undefined && (
+                  ) : null}
+                  {dematReturns.dailyReturnsPercentage !== undefined ? (
                     <div className="glass-effect rounded-lg p-3">
                       <p className="text-xs text-dark-textSecondary mb-1">Daily Returns %</p>
                       <p className={`text-sm font-bold ${dematReturns.dailyReturnsPercentage >= 0 ? 'text-accent-success' : 'text-accent-danger'}`}>
                         {dematReturns.dailyReturnsPercentage >= 0 ? '+' : ''}{dematReturns.dailyReturnsPercentage.toFixed(2)}%
                       </p>
                     </div>
-                  )}
-                  {demat.dematValuePercentage !== undefined && (
+                  ) : null}
+                  {demat.dematValuePercentage !== undefined ? (
                     <div className="glass-effect rounded-lg p-3">
                       <p className="text-xs text-dark-textSecondary mb-1">Portfolio %</p>
                       <p className="text-sm font-bold text-accent-warning">{demat.dematValuePercentage.toFixed(2)}%</p>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Holdings Insights */}
-                {holdingsInsights.length > 0 && (
+                {holdingsInsights.length > 0 ? (
                   <div className="mb-4">
                     <h6 className="text-sm font-bold text-accent-primary mb-3 flex items-center gap-2">
                       <span>📊</span> Holdings Insights ({holdingsInsights.length})
@@ -355,20 +355,20 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                             >
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <h7 className="text-sm font-semibold text-dark-text">
+                                  <h6 className="text-sm font-semibold text-dark-text">
                                     {holding.schemeName || holding.isin || 'Unknown ETF'}
-                                  </h7>
-                                  {holding.isin && (
+                                  </h6>
+                                  {holding.isin ? (
                                     <p className="text-xs text-dark-textSecondary font-mono mt-1">ISIN: {holding.isin}</p>
-                                  )}
+                                  ) : null}
                                 </div>
                                 <div className="text-right">
                                   <p className="text-sm font-bold text-accent-success">{formatCurrency(holding.currentValue || 0)}</p>
-                                  {holdingReturns.dailyReturnsPercentage !== undefined && (
+                                  {holdingReturns.dailyReturnsPercentage !== undefined ? (
                                     <p className={`text-xs ${holdingReturns.dailyReturnsPercentage >= 0 ? 'text-accent-success' : 'text-accent-danger'}`}>
                                       {holdingReturns.dailyReturnsPercentage >= 0 ? '+' : ''}{holdingReturns.dailyReturnsPercentage.toFixed(2)}%
                                     </p>
-                                  )}
+                                  ) : null}
                                   <span className="text-xs text-dark-textSecondary">
                                     {isHoldingExpanded ? '▼' : '▶'}
                                   </span>
@@ -378,28 +378,28 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
 
                             {/* Quick Holding Stats */}
                             <div className="grid md:grid-cols-3 gap-2 mb-3">
-                              {holding.totalUnits !== undefined && (
+                              {holding.totalUnits !== undefined ? (
                                 <div className="text-center">
                                   <p className="text-xs text-dark-textSecondary">Units</p>
-                                  <p className="text-sm font-bold text-dark-text">{holding.totalUnits.toLocaleString('en-IN')}</p>
+                                    <p className="text-sm font-bold text-dark-text">{holding.totalUnits.toLocaleString('en-IN')}</p>
                                 </div>
-                              )}
-                              {holding.currentNAV !== undefined && (
+                              ) : null}
+                              {holding.currentNAV !== undefined ? (
                                 <div className="text-center">
                                   <p className="text-xs text-dark-textSecondary">NAV</p>
-                                  <p className="text-sm font-bold text-accent-success">{formatCurrency(holding.currentNAV)}</p>
+                                    <p className="text-sm font-bold text-accent-success">{formatCurrency(holding.currentNAV)}</p>
                                 </div>
-                              )}
-                              {holding.currentNAVDate && (
+                              ) : null}
+                              {holding.currentNAVDate ? (
                                 <div className="text-center">
                                   <p className="text-xs text-dark-textSecondary">NAV Date</p>
-                                  <p className="text-sm font-bold text-dark-text">{formatDate(holding.currentNAVDate)}</p>
+                                    <p className="text-sm font-bold text-dark-text">{formatDate(holding.currentNAVDate)}</p>
                                 </div>
-                              )}
+                              ) : null}
                             </div>
 
                             {/* Expanded Holding Details */}
-                            {isHoldingExpanded && (
+                            {isHoldingExpanded ? (
                               <div className="pt-3 border-t border-dark-border/50">
                                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
                                   {Object.entries(holding).map(([key, value]) => (
@@ -414,16 +414,16 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                                   ))}
                                 </div>
                               </div>
-                            )}
+                            ) : null}
                           </div>
                         );
                       })}
                     </div>
                   </div>
-                )}
+                ) : null}
 
                 {/* Expanded Demat Details */}
-                {isExpanded && (
+                {isExpanded ? (
                   <div className="pt-4 border-t border-dark-border">
                     <h6 className="text-sm font-bold text-accent-primary mb-3">All Demat Fields</h6>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -446,7 +446,7 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
                       </pre>
                     </div>
                   </div>
-                )}
+                ) : null}
               </motion.div>
             );
           })}
@@ -502,13 +502,13 @@ export default function ETFInsightsDisplay({ data }: ETFInsightsDisplayProps) {
             </span>
           </div>
         </button>
-        {showRawData && (
+        {showRawData ? (
           <div className="mt-4 glass-effect rounded-lg p-4 max-h-96 overflow-auto">
             <pre className="text-xs text-dark-text whitespace-pre-wrap break-words">
               {JSON.stringify(data, null, 2)}
             </pre>
           </div>
-        )}
+        ) : null}
       </motion.div>
     </div>
   );
