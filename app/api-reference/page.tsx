@@ -4,6 +4,17 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
+// Type definitions
+interface ApiEndpoint {
+  name: string;
+  method: string;
+  url: string;
+  curl: string;
+  description: string;
+  sampleInput?: string;
+  sampleOutput?: string;
+}
+
 // API Reference Data
 const apiEndpoints = [
   {
@@ -433,19 +444,19 @@ curl -s -X DELETE http://localhost:3000/api/test/full-flow | jq '.status'`;
 
                         {/* Sample Input/Output */}
                         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {endpoint.sampleInput && (
+                          {(endpoint as ApiEndpoint).sampleInput && (
                             <div>
                               <div className="text-xs text-slate-500 mb-1">Sample Input:</div>
                               <div className="bg-slate-950 rounded-lg p-2 overflow-x-auto">
-                                <pre className="text-xs text-amber-400 font-mono">{endpoint.sampleInput}</pre>
+                                <pre className="text-xs text-amber-400 font-mono">{(endpoint as ApiEndpoint).sampleInput}</pre>
                               </div>
                             </div>
                           )}
-                          {endpoint.sampleOutput && (
+                          {(endpoint as ApiEndpoint).sampleOutput && (
                             <div>
                               <div className="text-xs text-slate-500 mb-1">Sample Output:</div>
                               <div className="bg-slate-950 rounded-lg p-2 overflow-x-auto">
-                                <pre className="text-xs text-emerald-400 font-mono">{endpoint.sampleOutput}</pre>
+                                <pre className="text-xs text-emerald-400 font-mono">{(endpoint as ApiEndpoint).sampleOutput}</pre>
                               </div>
                             </div>
                           )}
