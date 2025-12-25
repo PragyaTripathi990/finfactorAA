@@ -7,7 +7,6 @@ import {
   getUserDetails,
   getMutualFunds,
   getFIRequestUser,
-  getFIRequestAccount,
   getFIPs,
   getBrokers,
   getNPSLinkedAccounts,
@@ -252,10 +251,7 @@ export default function TestDashboardPage() {
         break;
       case 'firequest':
         if (!data.firequest) {
-          Promise.all([
-            loadData('fi-user', getFIRequestUser),
-            loadData('fi-account', getFIRequestAccount),
-          ]);
+          loadData('fi-user', getFIRequestUser);
         }
         break;
       case 'fips':
@@ -545,13 +541,6 @@ export default function TestDashboardPage() {
               title="FI Request User" 
               icon="👤" 
             />
-            {data['fi-account'] && (
-              <FIRequestDisplay 
-                data={data['fi-account']} 
-                title="FI Request Account" 
-                icon="🏦" 
-              />
-            )}
           </div>
         );
 

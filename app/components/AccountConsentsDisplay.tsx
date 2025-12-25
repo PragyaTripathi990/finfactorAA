@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { camelToTitleCase } from '@/lib/formatters';
 
 interface AccountConsentsDisplayProps {
@@ -9,9 +9,6 @@ interface AccountConsentsDisplayProps {
 }
 
 export default function AccountConsentsDisplay({ data }: AccountConsentsDisplayProps) {
-  const [expandedConsents, setExpandedConsents] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
-
   // Handle the API response structure - must be before useMemo
   let consents: any[] = [];
   
@@ -27,6 +24,21 @@ export default function AccountConsentsDisplay({ data }: AccountConsentsDisplayP
       consents = [data];
     }
   }
+
+  const [expandedConsents, setExpandedConsents] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Auto-expand all consents when data is loaded
+  useEffect(() => {
+    if (consents.length > 0) {
+      const allConsentIds = new Set<string>();
+      consents.forEach((consent: any, idx: number) => {
+        const consentId = consent.consentId || consent.consentHandle || consent.id || `consent-${idx}`;
+        allConsentIds.add(consentId);
+      });
+      setExpandedConsents(allConsentIds);
+    }
+  }, [data]);
 
   // Filter consents based on search query - must be before any early returns
   const filteredConsents = useMemo(() => {

@@ -55,8 +55,28 @@ interface NPSDisplayProps {
 }
 
 export default function NPSLinkedAccountsDisplay({ data }: NPSDisplayProps) {
-  const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
-  const [expandedFIPs, setExpandedFIPs] = useState<Set<string>>(new Set());
+  // Auto-expand all sections by default
+  const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(() => {
+    const allAccountIds = new Set<string>();
+    if (data?.fipData) {
+      data.fipData.forEach((fip) => {
+        fip.linkedAccounts.forEach((account) => {
+          allAccountIds.add(account.fiDataId);
+        });
+      });
+    }
+    return allAccountIds;
+  });
+  
+  const [expandedFIPs, setExpandedFIPs] = useState<Set<string>>(() => {
+    const allFIPIds = new Set<string>();
+    if (data?.fipData) {
+      data.fipData.forEach((fip) => {
+        allFIPIds.add(fip.fipId);
+      });
+    }
+    return allFIPIds;
+  });
 
   if (!data || !data.fipData || data.fipData.length === 0) {
     return (
