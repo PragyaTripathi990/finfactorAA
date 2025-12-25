@@ -6,7 +6,7 @@ import { camelToTitleCase, formatValue } from '@/lib/formatters';
 
 interface TDLinkedAccountsDisplayProps {
   data: any;
-}
+) : null}
 
 export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDisplayProps) {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
@@ -40,7 +40,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
         <p className="text-lg">No term deposit linked accounts data available</p>
       </div>
     );
-  }
+  ) : null}
 
   // Extract other data values after hooks
   const totalFiData = data.totalFiData || 0;
@@ -80,7 +80,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
         newSet.delete(accountId);
       } else {
         newSet.add(accountId);
-      }
+      ) : null}
       return newSet;
     });
   };
@@ -93,7 +93,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
         newSet.delete(fipId);
       } else {
         newSet.add(fipId);
-      }
+      ) : null}
       return newSet;
     });
   };
@@ -106,7 +106,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
         newSet.delete(id);
       } else {
         newSet.add(id);
-      }
+      ) : null}
       return newSet;
     });
   };
@@ -131,12 +131,12 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
   const renderField = (key: string, value: any, level: number = 0) => {
     if (value === null || value === undefined || value === '') {
       return <span className="text-dark-textSecondary italic text-sm">—</span>;
-    }
+    ) : null}
 
     if (Array.isArray(value)) {
       if (value.length === 0) {
         return <div className="text-dark-textSecondary text-sm">Empty array</div>;
-      }
+      ) : null}
       return (
         <div className="space-y-2">
           {value.map((item, idx) => (
@@ -157,7 +157,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
           ))}
         </div>
       );
-    }
+    ) : null}
 
     if (typeof value === 'object') {
       return (
@@ -170,24 +170,24 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
           ))}
         </div>
       );
-    }
+    ) : null}
 
     const lowerKey = key.toLowerCase();
     if (lowerKey.includes('date') || lowerKey.includes('time')) {
       return <span className="text-accent-secondary">{formatDate(value)}</span>;
-    }
+    ) : null}
     if (lowerKey.includes('value') || lowerKey.includes('price') || lowerKey.includes('amount') || lowerKey.includes('cost') || lowerKey.includes('balance')) {
       if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
         return <span className="text-accent-success font-semibold">{formatCurrency(value)}</span>;
-      }
-    }
+      ) : null}
+    ) : null}
     if (typeof value === 'boolean') {
       return (
         <span className={`font-semibold ${value ? 'text-accent-success' : 'text-accent-danger'}`}>
           {value ? 'Yes' : 'No'}
         </span>
       );
-    }
+    ) : null}
 
     return <span className="text-dark-text">{String(value)}</span>;
   };
@@ -252,7 +252,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
     return (
       <div className="space-y-4">
         {/* Account Information */}
-        {accountFields.length > 0 && (
+        {accountFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>🏦</span> Account Information
@@ -273,7 +273,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
         )}
 
         {/* Balance & Amount Information */}
-        {balanceFields.length > 0 && (
+        {balanceFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-success mb-2 flex items-center gap-2">
               <span>💰</span> Balance & Amount Information
@@ -291,10 +291,9 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
-        {/* Holder Information */}
-        {holderFields.length > 0 && (
+        {holderFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-info mb-2 flex items-center gap-2">
               <span>👤</span> Holder Information
@@ -315,7 +314,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
         )}
 
         {/* Date & Time Fields */}
-        {dateFields.length > 0 && (
+        {dateFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-secondary mb-2 flex items-center gap-2">
               <span>📅</span> Date & Time Information
@@ -336,7 +335,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
         )}
 
         {/* Status Fields */}
-        {statusFields.length > 0 && (
+        {statusFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>⚡</span> Status Information
@@ -357,7 +356,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
         )}
 
         {/* Consent Information */}
-        {consentFields.length > 0 && (
+        {consentFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>✅</span> Consent Information
@@ -378,7 +377,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
         )}
 
         {/* FI Data */}
-        {fiDataValue && (
+        {fiDataValue ? (
           <div>
             <div className="flex items-center justify-between mb-3">
               <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
@@ -442,7 +441,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
         )}
 
         {/* Other Fields */}
-        {otherFields.length > 0 && (
+        {otherFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>📋</span> Additional Information
@@ -494,7 +493,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
           </div>
           <span className="text-4xl opacity-50">💰</span>
         </div>
-        {lastFetchDate && (
+        {lastFetchDate ? (
           <div className="glass-effect rounded-xl p-4 flex items-center justify-between">
             <div>
               <p className="text-sm text-dark-textSecondary">Last Fetch</p>
@@ -520,7 +519,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-transparent border-none outline-none text-dark-text placeholder-dark-textSecondary"
           />
-          {searchQuery && (
+          {searchQuery ? (
             <button
               onClick={() => setSearchQuery('')}
               className="text-dark-textSecondary hover:text-dark-text transition-colors"
@@ -529,7 +528,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
             </button>
           )}
         </div>
-        {searchQuery && (
+        {searchQuery ? (
           <p className="text-xs text-dark-textSecondary mt-2">
             Found {filteredFipData.reduce((sum: number, fip: any) => sum + (fip.linkedAccounts?.length || 0), 0)} account(s) matching "{searchQuery}"
           </p>
@@ -537,7 +536,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
       </motion.div>
 
       {/* Bulk Actions */}
-      {filteredFipData.length > 0 && (
+      {filteredFipData.length > 0 ? (
         <div className="flex gap-2">
           <button
             onClick={expandAll}
@@ -588,12 +587,12 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
                         {fip.fipName || fip.fipId || 'Unknown FIP'}
                       </h3>
                       <div className="flex flex-wrap gap-2">
-                        {fip.fipId && (
+                        {fip.fipId ? (
                           <span className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary rounded font-mono">
                             {fip.fipId}
                           </span>
                         )}
-                        {linkedAccounts.length > 0 && (
+                        {linkedAccounts.length > 0 ? (
                           <span className="text-xs px-2 py-1 bg-accent-info/20 text-accent-info rounded">
                             {linkedAccounts.length} Account{linkedAccounts.length !== 1 ? 's' : ''}
                           </span>
@@ -607,7 +606,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
                 </button>
 
                 {/* FIP Details */}
-                {isFIPExpanded && (
+                {isFIPExpanded ? (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -658,22 +657,22 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
                                       {account.maskedAccNumber || account.accountRefNumber || 'Unknown Account'}
                                     </h5>
                                     <div className="flex flex-wrap gap-2">
-                                      {account.linkedAccountType && (
+                                      {account.linkedAccountType ? (
                                         <span className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary rounded">
                                           {camelToTitleCase(account.linkedAccountType)}
                                         </span>
                                       )}
-                                      {account.accountRefNumber && (
+                                      {account.accountRefNumber ? (
                                         <span className="text-xs px-2 py-1 bg-accent-info/20 text-accent-info rounded font-mono">
                                           Ref: {account.accountRefNumber}
                                         </span>
                                       )}
-                                      {account.dataFetched && (
+                                      {account.dataFetched ? (
                                         <span className="text-xs px-2 py-1 bg-accent-success/20 text-accent-success rounded">
                                           Data Fetched
                                         </span>
                                       )}
-                                      {account.currentBalance !== undefined && (
+                                      {account.currentBalance !== undefined ? (
                                         <span className="text-xs px-2 py-1 bg-accent-success/20 text-accent-success rounded">
                                           {formatCurrency(account.currentBalance)}
                                         </span>
@@ -686,7 +685,7 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
                                 </div>
                               </button>
 
-                              {isAccountExpanded && (
+                              {isAccountExpanded ? (
                                 <motion.div
                                   initial={{ opacity: 0, height: 0 }}
                                   animate={{ opacity: 1, height: 'auto' }}
@@ -711,5 +710,5 @@ export default function TDLinkedAccountsDisplay({ data }: TDLinkedAccountsDispla
       )}
     </div>
   );
-}
+) : null}
 

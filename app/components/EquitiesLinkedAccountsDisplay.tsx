@@ -6,7 +6,7 @@ import { camelToTitleCase } from '@/lib/formatters';
 
 interface EquitiesLinkedAccountsDisplayProps {
   data: any;
-}
+) : null}
 
 export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAccountsDisplayProps) {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
@@ -46,7 +46,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
         <p className="text-lg">No equities linked accounts data available</p>
       </div>
     );
-  }
+  ) : null}
 
   // Format currency
   const formatCurrency = (amount: number | string) => {
@@ -80,7 +80,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    }
+    ) : null}
     setExpandedAccounts(newSet);
   };
 
@@ -91,7 +91,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
       newSet.delete(fipId);
     } else {
       newSet.add(fipId);
-    }
+    ) : null}
     setExpandedFIPs(newSet);
   };
 
@@ -102,7 +102,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    }
+    ) : null}
     setShowAllFields(newSet);
   };
 
@@ -110,12 +110,12 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
   const renderField = (key: string, value: any, level: number = 0) => {
     if (value === null || value === undefined) {
       return <span className="text-dark-textSecondary italic text-sm">—</span>;
-    }
+    ) : null}
 
     if (Array.isArray(value)) {
       if (value.length === 0) {
         return <div className="text-dark-textSecondary text-sm">Empty array</div>;
-      }
+      ) : null}
       return (
         <div className="space-y-2">
           {value.map((item, idx) => (
@@ -136,7 +136,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
           ))}
         </div>
       );
-    }
+    ) : null}
 
     if (typeof value === 'object') {
       return (
@@ -149,18 +149,18 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
           ))}
         </div>
       );
-    }
+    ) : null}
 
     const lowerKey = key.toLowerCase();
     if (lowerKey.includes('balance') || lowerKey.includes('amount') || lowerKey.includes('value') || lowerKey.includes('price') || lowerKey.includes('cost')) {
       if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
         return <span className="text-accent-success font-semibold">{formatCurrency(value)}</span>;
-      }
-    }
+      ) : null}
+    ) : null}
 
     if (lowerKey.includes('date') || lowerKey.includes('time')) {
       return <span className="text-dark-text">{formatDate(value)}</span>;
-    }
+    ) : null}
 
     if (typeof value === 'boolean') {
       return (
@@ -168,7 +168,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
           {value ? 'Yes' : 'No'}
         </span>
       );
-    }
+    ) : null}
 
     return <span className="text-dark-text break-words">{String(value)}</span>;
   };
@@ -265,7 +265,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
     return (
       <div className="space-y-4">
         {/* Account Information */}
-        {accountFields.length > 0 && (
+        {accountFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>🏦</span> Account Information
@@ -283,10 +283,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Holding Information */}
-        {holdingFields.length > 0 && (
+        {holdingFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-success mb-2 flex items-center gap-2">
               <span>📊</span> Holding Information
@@ -304,10 +304,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Value & Price Information */}
-        {valueFields.length > 0 && (
+        {valueFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-warning mb-2 flex items-center gap-2">
               <span>💰</span> Value & Price Information
@@ -325,10 +325,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Date & Time Fields */}
-        {dateFields.length > 0 && (
+        {dateFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-secondary mb-2 flex items-center gap-2">
               <span>📅</span> Date & Time Information
@@ -346,10 +346,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Status Fields */}
-        {statusFields.length > 0 && (
+        {statusFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>⚡</span> Status Information
@@ -367,10 +367,9 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
-        {/* Holder Information */}
-        {holderFields.length > 0 && (
+        {holderFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-secondary mb-2 flex items-center gap-2">
               <span>👤</span> Holder Information
@@ -388,10 +387,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Broker Information */}
-        {brokerFields.length > 0 && (
+        {brokerFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-warning mb-2 flex items-center gap-2">
               <span>🏢</span> Broker Information
@@ -409,10 +408,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* FIP Information */}
-        {fipFields.length > 0 && (
+        {fipFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>🏦</span> FIP Information
@@ -430,10 +429,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Request & Count Information */}
-        {requestFields.length > 0 && (
+        {requestFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>📊</span> Request & Count Information
@@ -451,10 +450,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Consent Information */}
-        {consentFields.length > 0 && (
+        {consentFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>✅</span> Consent Information
@@ -472,10 +471,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* FI Data */}
-        {fiDataValue && (
+        {fiDataValue ? (
           <div>
             <div className="flex items-center justify-between mb-3">
               <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
@@ -538,10 +537,10 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Other Fields */}
-        {otherFields.length > 0 && (
+        {otherFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>📋</span> Additional Information
@@ -559,7 +558,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               ))}
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     );
   };
@@ -581,7 +580,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-transparent border-none outline-none text-dark-text placeholder-dark-textSecondary"
           />
-          {searchQuery && (
+          {searchQuery ? (
             <button
               onClick={() => setSearchQuery('')}
               className="text-dark-textSecondary hover:text-dark-text transition-colors"
@@ -590,7 +589,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
             </button>
           )}
         </div>
-        {searchQuery && (
+        {searchQuery ? (
           <p className="text-xs text-dark-textSecondary mt-2">
             Found {filteredFipData.reduce((sum: number, fip: any) => sum + (fip.linkedAccounts?.length || 0), 0)} account(s) matching "{searchQuery}"
           </p>
@@ -656,7 +655,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               <p className="text-2xl font-bold text-dark-text">
                 {filteredFipData.reduce((sum: number, fip: any) => sum + (fip.linkedAccounts?.length || 0), 0)}
               </p>
-              {totalBrokers > 0 && (
+              {totalBrokers > 0 ? (
                 <p className="text-xs text-dark-textSecondary mt-1">{totalBrokers} Broker{totalBrokers !== 1 ? 's' : ''}</p>
               )}
             </div>
@@ -712,7 +711,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
               </div>
 
               {/* FIP Details */}
-              {isFIPExpanded && (
+              {isFIPExpanded ? (
                 <div className="mb-6 space-y-2">
                   <h4 className="text-sm font-bold text-accent-primary mb-2">FIP Information</h4>
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -763,21 +762,21 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
                                 <h4 className="text-lg font-semibold text-dark-text">
                                   {account.issuerName || account.symbol || account.isinDescription || account.dematId || account.accountRefNumber || 'Account'}
                                 </h4>
-                                {account.brokerName && (
+                                {account.brokerName ? (
                                   <p className="text-sm text-dark-textSecondary">{account.brokerName}</p>
                                 )}
                                 <div className="flex flex-wrap gap-2 mt-2">
-                                  {account.accountType && (
+                                  {account.accountType ? (
                                     <span className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary rounded">
                                       {account.accountType}
                                     </span>
                                   )}
-                                  {account.fipName && (
+                                  {account.fipName ? (
                                     <span className="text-xs px-2 py-1 bg-accent-secondary/20 text-accent-secondary rounded">
                                       {account.fipName}
                                     </span>
                                   )}
-                                  {account.dataFetched !== undefined && (
+                                  {account.dataFetched !== undefined ? (
                                     <span className={`text-xs px-2 py-1 rounded ${account.dataFetched ? 'bg-accent-success/20 text-accent-success' : 'bg-accent-warning/20 text-accent-warning'}`}>
                                       {account.dataFetched ? '✓ Data Fetched' : '⚠ Not Fetched'}
                                     </span>
@@ -786,7 +785,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
                               </div>
                             </div>
                             <div className="text-right">
-                              {account.currentValue !== undefined && (
+                              {account.currentValue !== undefined ? (
                                 <p className="text-xl font-bold gradient-text">
                                   {formatCurrency(account.currentValue)}
                                 </p>
@@ -802,7 +801,7 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
                         </button>
 
                         {/* Account Fields */}
-                        {isExpanded && (
+                        {isExpanded ? (
                           <div className="pt-4 border-t border-dark-border">
                             {renderAccountFields(account, accountId)}
                           </div>
@@ -818,5 +817,5 @@ export default function EquitiesLinkedAccountsDisplay({ data }: EquitiesLinkedAc
       )}
     </div>
   );
-}
+) : null}
 

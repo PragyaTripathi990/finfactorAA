@@ -6,7 +6,7 @@ import { camelToTitleCase } from '@/lib/formatters';
 
 interface ETFLinkedAccountsDisplayProps {
   data: any;
-}
+) : null}
 
 export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisplayProps) {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
@@ -21,7 +21,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
         <p className="text-lg">No ETF linked accounts data available</p>
       </div>
     );
-  }
+  ) : null}
 
   // Handle the API response structure - must be before useMemo
   const fipData = data?.fipData || [];
@@ -77,7 +77,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    }
+    ) : null}
     setExpandedAccounts(newSet);
   };
 
@@ -88,7 +88,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
       newSet.delete(fipId);
     } else {
       newSet.add(fipId);
-    }
+    ) : null}
     setExpandedFIPs(newSet);
   };
 
@@ -99,7 +99,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    }
+    ) : null}
     setShowAllFields(newSet);
   };
 
@@ -107,12 +107,12 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
   const renderField = (key: string, value: any, level: number = 0) => {
     if (value === null || value === undefined) {
       return <span className="text-dark-textSecondary italic text-sm">—</span>;
-    }
+    ) : null}
 
     if (Array.isArray(value)) {
       if (value.length === 0) {
         return <div className="text-dark-textSecondary text-sm">Empty array</div>;
-      }
+      ) : null}
       return (
         <div className="space-y-2">
           {value.map((item, idx) => (
@@ -133,7 +133,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
           ))}
         </div>
       );
-    }
+    ) : null}
 
     if (typeof value === 'object') {
       return (
@@ -146,18 +146,18 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
           ))}
         </div>
       );
-    }
+    ) : null}
 
     const lowerKey = key.toLowerCase();
     if (lowerKey.includes('balance') || lowerKey.includes('amount') || lowerKey.includes('value') || lowerKey.includes('nav') || lowerKey.includes('cost') || lowerKey.includes('price')) {
       if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
         return <span className="text-accent-success font-semibold">{formatCurrency(value)}</span>;
-      }
-    }
+      ) : null}
+    ) : null}
 
     if (lowerKey.includes('date') || lowerKey.includes('time')) {
       return <span className="text-dark-text">{formatDate(value)}</span>;
-    }
+    ) : null}
 
     if (typeof value === 'boolean') {
       return (
@@ -165,7 +165,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
           {value ? 'Yes' : 'No'}
         </span>
       );
-    }
+    ) : null}
 
     return <span className="text-dark-text break-words">{String(value)}</span>;
   };
@@ -232,7 +232,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
     return (
       <div className="space-y-4">
         {/* Account Information */}
-        {accountFields.length > 0 && (
+        {accountFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>🏦</span> Account Information
@@ -253,7 +253,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
         )}
 
         {/* Holding Information */}
-        {holdingFields.length > 0 && (
+        {holdingFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-success mb-2 flex items-center gap-2">
               <span>📊</span> Holding Information
@@ -274,7 +274,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
         )}
 
         {/* Value & Cost Information */}
-        {valueFields.length > 0 && (
+        {valueFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-warning mb-2 flex items-center gap-2">
               <span>💰</span> Value & Cost Information
@@ -295,7 +295,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
         )}
 
         {/* Date & Time Fields */}
-        {dateFields.length > 0 && (
+        {dateFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-secondary mb-2 flex items-center gap-2">
               <span>📅</span> Date & Time Information
@@ -316,7 +316,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
         )}
 
         {/* Status Fields */}
-        {statusFields.length > 0 && (
+        {statusFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>⚡</span> Status Information
@@ -337,7 +337,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
         )}
 
         {/* Consent Information */}
-        {consentFields.length > 0 && (
+        {consentFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>✅</span> Consent Information
@@ -358,7 +358,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
         )}
 
         {/* FI Data */}
-        {fiDataValue && (
+        {fiDataValue ? (
           <div>
             <div className="flex items-center justify-between mb-3">
               <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
@@ -424,7 +424,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
         )}
 
         {/* Other Fields */}
-        {otherFields.length > 0 && (
+        {otherFields.length > 0 ? (
           <div>
             <h5 className="text-sm font-bold text-accent-primary mb-2 flex items-center gap-2">
               <span>📋</span> Additional Information
@@ -459,7 +459,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
               </span>
             </div>
           </button>
-          {expandedAccounts.has(accountId + '-raw') && (
+          {expandedAccounts.has(accountId + '-raw') ? (
             <div className="mt-2 glass-effect rounded-lg p-4">
               <pre className="text-xs text-dark-text overflow-x-auto">
                 {JSON.stringify(account, null, 2)}
@@ -488,7 +488,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-transparent border-none outline-none text-dark-text placeholder-dark-textSecondary"
           />
-          {searchQuery && (
+          {searchQuery ? (
             <button
               onClick={() => setSearchQuery('')}
               className="text-dark-textSecondary hover:text-dark-text transition-colors"
@@ -497,7 +497,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
             </button>
           )}
         </div>
-        {searchQuery && (
+        {searchQuery ? (
           <p className="text-xs text-dark-textSecondary mt-2">
             Found {filteredFipData.reduce((sum: number, fip: any) => sum + (fip.linkedAccounts?.length || 0), 0)} account(s) matching "{searchQuery}"
           </p>
@@ -601,7 +601,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
               </div>
 
               {/* FIP Details */}
-              {isFIPExpanded && (
+              {isFIPExpanded ? (
                 <div className="mb-6 space-y-2">
                   <h4 className="text-sm font-bold text-accent-primary mb-2">FIP Information</h4>
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -652,21 +652,21 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
                                 <h4 className="text-lg font-semibold text-dark-text">
                                   {account.schemeName || account.isinDescription || account.dematId || account.accountRefNumber || 'Account'}
                                 </h4>
-                                {account.brokerName && (
+                                {account.brokerName ? (
                                   <p className="text-sm text-dark-textSecondary">{account.brokerName}</p>
                                 )}
                                 <div className="flex flex-wrap gap-2 mt-2">
-                                  {account.accountType && (
+                                  {account.accountType ? (
                                     <span className="text-xs px-2 py-1 bg-accent-primary/20 text-accent-primary rounded">
                                       {account.accountType}
                                     </span>
                                   )}
-                                  {account.fipName && (
+                                  {account.fipName ? (
                                     <span className="text-xs px-2 py-1 bg-accent-secondary/20 text-accent-secondary rounded">
                                       {account.fipName}
                                     </span>
                                   )}
-                                  {account.dataFetched !== undefined && (
+                                  {account.dataFetched !== undefined ? (
                                     <span className={`text-xs px-2 py-1 rounded ${account.dataFetched ? 'bg-accent-success/20 text-accent-success' : 'bg-accent-warning/20 text-accent-warning'}`}>
                                       {account.dataFetched ? '✓ Data Fetched' : '⚠ Not Fetched'}
                                     </span>
@@ -675,7 +675,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
                               </div>
                             </div>
                             <div className="text-right">
-                              {account.currentValue !== undefined && (
+                              {account.currentValue !== undefined ? (
                                 <p className="text-xl font-bold gradient-text">
                                   {formatCurrency(account.currentValue)}
                                 </p>
@@ -691,7 +691,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
                         </button>
 
                         {/* Account Fields */}
-                        {isExpanded && (
+                        {isExpanded ? (
                           <div className="pt-4 border-t border-dark-border">
                             {renderAccountFields(account, accountId)}
                           </div>
@@ -725,7 +725,7 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
             </span>
           </div>
         </button>
-        {expandedAccounts.has('raw-response') && (
+        {expandedAccounts.has('raw-response') ? (
           <div className="mt-4 glass-effect rounded-lg p-4 max-h-96 overflow-auto">
             <pre className="text-xs text-dark-text whitespace-pre-wrap break-words">
               {JSON.stringify(data, null, 2)}
@@ -735,5 +735,5 @@ export default function ETFLinkedAccountsDisplay({ data }: ETFLinkedAccountsDisp
       </motion.div>
     </div>
   );
-}
+) : null}
 

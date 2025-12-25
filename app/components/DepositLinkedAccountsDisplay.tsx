@@ -6,7 +6,7 @@ import { camelToTitleCase, formatValue } from '@/lib/formatters';
 
 interface DepositLinkedAccountsDisplayProps {
   data: any;
-}
+) : null}
 
 export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAccountsDisplayProps) {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
@@ -40,7 +40,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
         <p className="text-lg">No deposit linked accounts data available</p>
       </div>
     );
-  }
+  ) : null}
 
   // Extract other data values after hooks
   const totalFiData = data.totalFiData || 0;
@@ -80,7 +80,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    }
+    ) : null}
     setExpandedAccounts(newSet);
   };
 
@@ -91,7 +91,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       newSet.delete(fipId);
     } else {
       newSet.add(fipId);
-    }
+    ) : null}
     setExpandedFIPs(newSet);
   };
 
@@ -101,13 +101,13 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       return (
         <div className="text-dark-textSecondary italic text-sm">—</div>
       );
-    }
+    ) : null}
 
     // Handle arrays
     if (Array.isArray(value)) {
       if (value.length === 0) {
         return <div className="text-dark-textSecondary text-sm">Empty array</div>;
-      }
+      ) : null}
       return (
         <div className="space-y-2">
           {value.map((item, idx) => (
@@ -128,7 +128,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           ))}
         </div>
       );
-    }
+    ) : null}
 
     // Handle nested objects
     if (typeof value === 'object') {
@@ -142,19 +142,19 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           ))}
         </div>
       );
-    }
+    ) : null}
 
     // Handle special formatting
     const lowerKey = key.toLowerCase();
     if (lowerKey.includes('balance') || lowerKey.includes('amount') || lowerKey.includes('value')) {
       if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
         return <span className="text-accent-success font-semibold">{formatCurrency(value)}</span>;
-      }
-    }
+      ) : null}
+    ) : null}
 
     if (lowerKey.includes('date') || lowerKey.includes('time')) {
       return <span className="text-dark-text">{formatDate(value)}</span>;
-    }
+    ) : null}
 
     if (typeof value === 'boolean') {
       return (
@@ -162,7 +162,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
           {value ? 'Yes' : 'No'}
         </span>
       );
-    }
+    ) : null}
 
     return <span className="text-dark-text break-words">{String(value)}</span>;
   };
@@ -174,7 +174,7 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       newSet.delete(accountId);
     } else {
       newSet.add(accountId);
-    }
+    ) : null}
     setShowAllFields(newSet);
   };
 
@@ -801,5 +801,5 @@ export default function DepositLinkedAccountsDisplay({ data }: DepositLinkedAcco
       </motion.div>
     </div>
   );
-}
+) : null}
 
