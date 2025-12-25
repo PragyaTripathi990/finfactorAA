@@ -115,9 +115,26 @@ export default function TestDashboardPage() {
     try {
       const result = await loader();
       setData(prev => ({ ...prev, [key]: result }));
-      if (!result) toast.error(`No data available for ${key}`);
+      
+      // Only show error if result is explicitly null/undefined (not empty array/object)
+      if (result === null || result === undefined) {
+        console.warn(`No data returned for ${key}`);
+        // Don't show toast for empty data - let the component handle it
+      } else if (Array.isArray(result) && result.length === 0) {
+        console.info(`Empty array returned for ${key}`);
+        // Empty arrays are valid - component will show "No data" message
+      } else if (typeof result === 'object' && Object.keys(result).length === 0) {
+        console.info(`Empty object returned for ${key}`);
+        // Empty objects are valid - component will show "No data" message
+      }
     } catch (error) {
-      toast.error(`Error loading ${key}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Error loading ${key}:`, error);
+      toast.error(`Error loading ${key}: ${errorMessage}`, {
+        duration: 5000,
+      });
+      // Set error state so component can show helpful message
+      setData(prev => ({ ...prev, [`${key}_error`]: errorMessage }));
     } finally {
       setLoading(prev => ({ ...prev, [key]: false }));
     }

@@ -17,7 +17,12 @@ export default function AccountStatementDisplay({ data }: AccountStatementDispla
       <div className="text-center py-12 text-dark-textSecondary">
         <p className="text-5xl mb-3">📭</p>
         <p className="text-lg">No account statement data available</p>
-        <p className="text-sm mt-2">Please check the browser console for errors</p>
+        <p className="text-sm mt-2 text-dark-textSecondary/70">
+          This could mean:
+          <br />• No transactions found for this account
+          <br />• Account statement data hasn't been fetched yet
+          <br />• Please check the browser console for detailed error messages
+        </p>
       </div>
     );
   }
